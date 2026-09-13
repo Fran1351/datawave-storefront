@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { products } from "@/app/data/products";
-import { Product } from "@/app/types/product";
 import AddToCartButton from "@/app/components/AddToCartButton";
 
 export default function CatalogPage() {
