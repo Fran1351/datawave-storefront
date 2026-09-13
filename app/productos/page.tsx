@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import Link from "link";
-import { products } from "@/data/products"; // Ajustá el import a tu fuente de datos
+import Link from "next/link"; // ✅ Corregido: importación oficial de Next.js
+import { products } from "@/data/products";
 import AddToCartButton from "../components/AddToCartButton";
 
 export default function CatalogPage() {
