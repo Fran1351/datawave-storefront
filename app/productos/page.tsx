@@ -11,7 +11,6 @@ export default function CatalogPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("TODOS");
 
-  // Extraer categorías únicas dinámicamente evitando 'undefined'
   const categories = useMemo(() => {
     const cats = (products as Product[])
       .map((p) => p.category)
@@ -19,7 +18,6 @@ export default function CatalogPage() {
     return ["TODOS", ...Array.from(new Set(cats))];
   }, []);
 
-  // Filtrado reactivo por texto y categoría
   const filteredProducts = useMemo(() => {
     return (products as Product[]).filter((product) => {
       const matchesSearch = product.name
@@ -34,10 +32,8 @@ export default function CatalogPage() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white pt-32 pb-24 px-6 md:px-16 max-w-7xl mx-auto selection:bg-cyan-500 selection:text-black">
-      {/* Background Glow */}
       <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-cyan-500/10 blur-[160px] pointer-events-none -z-10 rounded-full" />
 
-      {/* Header */}
       <div className="mb-10 text-center md:text-left">
         <span className="text-xs font-mono text-cyan-400 tracking-widest uppercase">
           CATÁLOGO EXCLUSIVO
@@ -50,9 +46,7 @@ export default function CatalogPage() {
         </p>
       </div>
 
-      {/* Controles: Búsqueda y Filtros */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 mb-12 bg-zinc-900/40 border border-zinc-800/80 p-4 rounded-2xl backdrop-blur-xl">
-        {/* Barra de búsqueda */}
         <div className="relative flex-1">
           <svg
             className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
@@ -84,7 +78,6 @@ export default function CatalogPage() {
           )}
         </div>
 
-        {/* Filtro por Categorías */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
           {categories.map((cat) => (
             <button
@@ -102,7 +95,6 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      {/* Resultados & Grid */}
       {filteredProducts.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/20">
           <p className="text-zinc-400 text-base font-medium">
@@ -126,7 +118,6 @@ export default function CatalogPage() {
               className="group relative bg-zinc-900/30 border border-zinc-800/80 hover:border-cyan-500/40 rounded-3xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]"
             >
               <div>
-                {/* Visual del producto */}
                 <Link
                   href={`/productos/${product.id}`}
                   className="block relative aspect-square w-full bg-white rounded-2xl overflow-hidden p-6 mb-4"
@@ -140,7 +131,6 @@ export default function CatalogPage() {
                   />
                 </Link>
 
-                {/* Categoría y Nombre */}
                 <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider">
                   {product.category ?? "General"}
                 </span>
@@ -154,7 +144,6 @@ export default function CatalogPage() {
                 </p>
               </div>
 
-              {/* Precio y Botón de Acción */}
               <div className="mt-6 pt-4 border-t border-zinc-800/60 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-zinc-500 block font-mono">PRECIO</span>
