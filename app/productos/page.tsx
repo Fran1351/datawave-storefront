@@ -2,23 +2,26 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import Link from "next/link"; //
-import { products } from "../data/products";
-import AddToCartButton from "../components/AddToCartButton";
+import Link from "next/link";
+import { products } from "@/app/data/products";
+import { Product } from "@/app/types/product";
+import AddToCartButton from "@/app/components/AddToCartButton";
 
 export default function CatalogPage() {
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("TODOS");
+  const [selectedCategory, setSelectedCategory] = useState<string>("TODOS");
 
-  // Extraer categorías únicas dinámicamente
+  // Extraer categorías únicas dinámicamente evitando 'undefined'
   const categories = useMemo(() => {
-    const cats = products.map((p) => p.category);
+    const cats = (products as Product[])
+      .map((p) => p.category)
+      .filter((cat): cat is string => Boolean(cat));
     return ["TODOS", ...Array.from(new Set(cats))];
   }, []);
 
   // Filtrado reactivo por texto y categoría
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
+    return (products as Product[]).filter((product) => {
       const matchesSearch = product.name
         .toLowerCase()
         .includes(search.toLowerCase());
@@ -86,7 +89,7 @@ export default function CatalogPage() {
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setSelectedCategory(cat ?? "Todas")}
+              onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${
                 selectedCategory === cat
                   ? "bg-cyan-400 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]"
@@ -124,7 +127,10 @@ export default function CatalogPage() {
             >
               <div>
                 {/* Visual del producto */}
-                <Link href={`/productos/${product.id}`} className="block relative aspect-square w-full bg-white rounded-2xl overflow-hidden p-6 mb-4">
+                <Link
+                  href={`/productos/${product.id}`}
+                  className="block relative aspect-square w-full bg-white rounded-2xl overflow-hidden p-6 mb-4"
+                >
                   <Image
                     src={product.image || product.imageUrl || "/placeholder.png"}
                     alt={product.name}
@@ -136,7 +142,7 @@ export default function CatalogPage() {
 
                 {/* Categoría y Nombre */}
                 <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider">
-                  {product.category}
+                  {product.category ?? "General"}
                 </span>
                 <Link href={`/productos/${product.id}`}>
                   <h3 className="text-lg font-bold text-white mt-1 group-hover:text-cyan-300 transition line-clamp-1">

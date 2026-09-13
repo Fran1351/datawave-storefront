@@ -1,40 +1,79 @@
 {
+
   "name": "datawavee",
+
   "version": "0.1.0",
+
   "scripts": {
+
     "dev": "next dev",
+
     "build": "next build",
+
     "start": "next start",
+
     "lint": "next lint"
+
   },
+
   "dependencies": {
+
     "@prisma/client": "^5.10.0",
+
     "@supabase/ssr": "^0.12.7",
+
     "@supabase/supabase-js": "^2.116.0",
+
     "framer-motion": "^13.2.0",
+
     "mercadopago": "^3.6.1",
+
     "next": "^16.3.5",
+
     "react": "^19.3.0",
+
     "react-dom": "^19.3.0"
+
   },
+
   "prisma": {
+
     "seed": "tsx prisma/seed.ts"
+
   },
+
   "allowScripts": {
+
     "@prisma/client": true,
+
     "@prisma/engines": true,
+
     "prisma": true,
+
     "@tailwindcss/postcss": true,
+
     "tailwindcss": true
+
   },
+
   "devDependencies": {
+
     "@tailwindcss/postcss": "^4.3.3",
+
     "@types/node": "^22.20.2",
+
     "@types/react": "^19.3.0",
+
     "autoprefixer": "^10.6.0",
+
     "postcss": "^8.5.28",
+
     "prisma": "^5.10.0",
+
     "tailwindcss": "^4.0.0",
+
     "typescript": "^7.0.2"
+
   }
+
 }
