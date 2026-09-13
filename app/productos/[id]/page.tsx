@@ -1,8 +1,9 @@
 import { Metadata } from "next";
 import Image from "next/image";
-import { products } from "../../data/products";
+import { products } from "@/app/data/products";
 import { notFound } from "next/navigation";
-import ProductActions from "./ProductActions"; // Componente cliente para botón "Añadir"
+import ProductActions from "@/app/productos/[id]/ProductActions";
+import { Product } from "@/app/types/product";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -10,7 +11,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const product = products.find((p) => p.id === id);
+  const product = products.find((p) => p.id.toString() === id);
 
   if (!product) {
     return {
@@ -18,31 +19,60 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const formattedPrice =
+    typeof product.price === "number"
+      ? new Intl.NumberFormat("es-AR", {
+          style: "currency",
+          currency: "ARS",
+          maximumFractionDigits: 0,
+        }).format(product.price)
+      : product.price;
+
   return {
-    title: `${product.name} - ${product.price} | DataWave`,
+    title: `${product.name} - ${formattedPrice} | DataWave`,
     description: product.description,
     openGraph: {
       title: product.name,
       description: product.description,
-      images: [{ url: product.image }],
+      images: [{ url: product.image ?? "/placeholder.png" }],
     },
   };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
   const { id } = await params;
-  const product = products.find((p) => p.id === id);
+  const rawProduct = products.find((p) => p.id.toString() === id);
 
-  if (!product) {
+  if (!rawProduct) {
     notFound();
   }
+
+  const product: Product = {
+    id: rawProduct.id,
+    name: rawProduct.name,
+    price: rawProduct.price,
+    numericPrice: typeof rawProduct.price === "number" ? rawProduct.price : undefined,
+    image: rawProduct.image ?? "/placeholder.png",
+    category: rawProduct.category || "General",
+    stock: rawProduct.stock ?? 10,
+    description: rawProduct.description || "",
+  };
+
+  const displayPrice =
+    typeof product.price === "number"
+      ? new Intl.NumberFormat("es-AR", {
+          style: "currency",
+          currency: "ARS",
+          maximumFractionDigits: 0,
+        }).format(product.price)
+      : product.price;
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white pt-36 pb-24 px-6 md:px-20">
       <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div className="bg-white rounded-3xl p-8 relative aspect-square">
           <Image
-            src={product.image}
+            src={product.image as string}
             alt={product.name}
             fill
             priority
@@ -55,7 +85,7 @@ export default async function ProductDetailPage({ params }: Props) {
             {product.category}
           </span>
           <h1 className="text-4xl font-black mt-2">{product.name}</h1>
-          <p className="text-3xl font-bold text-white mt-4">{product.price}</p>
+          <p className="text-3xl font-bold text-white mt-4">{displayPrice}</p>
           <p className="text-zinc-400 mt-6 leading-relaxed">{product.description}</p>
 
           <div className="mt-8">

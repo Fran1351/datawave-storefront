@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useCart } from "../context/CartContext";
+import { useCart } from "@/app/context/CartContext";
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
@@ -73,7 +73,7 @@ export default function CartPage() {
                   <div className="flex items-center gap-5 w-full sm:w-auto">
                     <div className="bg-white rounded-xl relative aspect-square w-20 flex-shrink-0 overflow-hidden">
                       <Image
-                        src={item.image}
+                        src={item.image || "/placeholder.png"}
                         alt={item.name}
                         fill
                         sizes="80px"

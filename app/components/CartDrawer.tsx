@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "../context/CartContext";
+import { useCart } from "@/app/context/CartContext";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -11,6 +11,15 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
+
+  // Formatear precio para mantener consistencia con el carrito principal
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   if (!isOpen) return null;
 
@@ -56,7 +65,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   >
                     <div className="relative w-16 h-16 bg-white rounded-xl overflow-hidden shrink-0">
                       <Image
-                        src={item.image}
+                        src={item.image || "/placeholder.png"}
                         alt={item.name}
                         fill
                         className="object-contain p-2"
@@ -65,7 +74,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-semibold truncate">{item.name}</h4>
-                      <p className="text-xs text-cyan-400 font-bold mt-0.5">{item.price}</p>
+                      <p className="text-xs text-cyan-400 font-bold mt-0.5">
+                        {formatPrice((item.numericPrice ?? item.price) as number)}
+                      </p>
                       
                       {/* Controles de cantidad */}
                       <div className="flex items-center gap-2 mt-2">
@@ -102,7 +113,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="flex justify-between items-center mb-6">
               <span className="text-sm text-zinc-400">Total Estimado</span>
               <span className="text-2xl font-black text-white">
-                ${totalPrice.toLocaleString("es-AR")}
+                {formatPrice(totalPrice)}
               </span>
             </div>
 

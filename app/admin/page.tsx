@@ -4,7 +4,7 @@ import { products } from "../data/products";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Product } from "../types/product";
+import { Product } from "@/app/types/product";
 
 export default function Admin() {
   const router = useRouter();
@@ -110,7 +110,7 @@ export default function Admin() {
               <div className="flex items-center gap-5">
                 <div className="bg-white rounded-2xl p-3 w-20 h-20 shrink-0 relative">
                   <Image
-                    src={product.image}
+                    src={product.image || "/placeholder.png"}
                     alt={product.name}
                     fill
                     className="object-contain p-1"
