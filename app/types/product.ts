@@ -1,13 +1,13 @@
 export interface Product {
-  id: string | number;
+  id: number | string;
   name: string;
-  description?: string;
+  description: string;
   price: number;
   numericPrice?: number;
-  image: string;
+  image?: string;
   imageUrl?: string;
-  category?: string;
-  stock?: number;
+  category: string;
+  stock: number;
 }
 
 export interface CartItem extends Product {
