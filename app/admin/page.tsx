@@ -4,11 +4,12 @@ import { products } from "../data/products";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Product } from "../types/product";
 
 export default function Admin() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [stock, setStock] = useState<Record<number, number>>({});
+  const [stock, setStock] = useState<Record<string | number, number>>({});
 
   // 1. Verificación de autenticación
   useEffect(() => {
@@ -36,8 +37,8 @@ export default function Admin() {
       }
     }
 
-    const initialStock = products.reduce(
-      (acc: Record<number, number>, product) => {
+    const initialStock = (products as Product[]).reduce(
+      (acc: Record<string | number, number>, product: Product) => {
         acc[product.id] = product.stock ?? 0;
         return acc;
       },
@@ -55,14 +56,14 @@ export default function Admin() {
     }
   }, [stock]);
 
-  function increase(id: number) {
+  function increase(id: string | number) {
     setStock((current) => ({
       ...current,
       [id]: (current[id] ?? 0) + 1,
     }));
   }
 
-  function decrease(id: number) {
+  function decrease(id: string | number) {
     setStock((current) => ({
       ...current,
       [id]: Math.max(0, (current[id] ?? 0) - 1),
@@ -101,7 +102,7 @@ export default function Admin() {
         </div>
 
         <div className="grid gap-6">
-          {products.map((product) => (
+          {(products as Product[]).map((product) => (
             <div
               key={product.id}
               className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800/80 flex flex-col md:flex-row md:items-center justify-between gap-6"
@@ -118,7 +119,9 @@ export default function Admin() {
 
                 <div>
                   <h2 className="text-xl font-bold">{product.name}</h2>
-                  <p className="text-zinc-400 mt-1">{product.price}</p>
+                  <p className="text-zinc-400 mt-1">
+                    ${product.price.toLocaleString("es-AR")}
+                  </p>
                 </div>
               </div>
 

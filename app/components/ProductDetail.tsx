@@ -3,10 +3,12 @@
 import { useCart } from "../context/CartContext";
 
 type ProductDetailProps = {
-  id: number;
+  id: number | string;
   name: string;
-  price: string;
+  price: number | string;
   image: string;
+  description?: string;
+  category?: string;
   stock?: number;
 };
 
@@ -15,9 +17,17 @@ export default function ProductDetail({
   name,
   price,
   image,
+  description = "",
+  category = "General",
   stock = 10,
 }: ProductDetailProps) {
   const { addToCart } = useCart();
+
+  // Convierte el precio a número de forma segura si viene como string (ej: "$25.000" -> 25000)
+  const numericPrice =
+    typeof price === "number"
+      ? price
+      : parseFloat(String(price).replace(/[^0-9.-]+/g, "")) || 0;
 
   return (
     <div className="mt-10 space-y-4">
@@ -26,8 +36,10 @@ export default function ProductDetail({
           addToCart({
             id,
             name,
-            price,
+            description,
+            price: numericPrice,
             image,
+            category,
             stock,
           })
         }

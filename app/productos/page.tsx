@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import Link from "next/link"; // ✅ Corregido: importación oficial de Next.js
-import { products } from "@/data/products";
+import Link from "next/link"; //
+import { products } from "../data/products";
 import AddToCartButton from "../components/AddToCartButton";
 
 export default function CatalogPage() {
@@ -86,7 +86,7 @@ export default function CatalogPage() {
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              onClick={() => setSelectedCategory(cat ?? "Todas")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${
                 selectedCategory === cat
                   ? "bg-cyan-400 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]"

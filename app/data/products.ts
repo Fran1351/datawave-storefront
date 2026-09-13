@@ -2,39 +2,43 @@ import { Product } from "../types/product";
 
 export const products: Product[] = [
   {
-    id: "1",
-    name: "Funda para iPhone",
-    price: "$25.000",
+    id: 1,
+    name: "Producto 1",
+    description: "Descripción del producto",
+    price: 25000,
     numericPrice: 25000,
-    category: "iPhone",
-    image: "/products/funda.jpg",
-    description: "Funda de silicona con MagSafe para máxima protección."
+    image: "/images/producto1.png",
+    category: "Categoría",
+    stock: 10,
   },
   {
-    id: "2",
-    name: "AirPods Pro 2",
-    price: "$350.000",
+    id: 2,
+    name: "Producto 2",
+    description: "Descripción del producto",
+    price: 350000,
     numericPrice: 350000,
-    category: "Audio",
-    image: "/products/airpods.jpg",
-    description: "Cancelación activa de ruido de nivel superior y audio espacial personalizado."
+    image: "/images/producto2.png",
+    category: "Categoría",
+    stock: 5,
   },
   {
-    id: "3",
-    name: "Cargador MagSafe 20W",
-    price: "$45.000",
+    id: 3,
+    name: "Producto 3",
+    description: "Descripción del producto",
+    price: 45000,
     numericPrice: 45000,
-    category: "Cargadores",
-    image: "/products/cargador.jpg",
-    description: "Carga inalámbrica rápida y alineación magnética perfecta para tu iPhone."
+    image: "/images/producto3.png",
+    category: "Categoría",
+    stock: 8,
   },
   {
-    id: "4",
-    name: "Perfume Bleu de Chanel",
-    price: "$210.000",
+    id: 4,
+    name: "Producto 4",
+    description: "Descripción del producto",
+    price: 210000,
     numericPrice: 210000,
-    category: "Perfumes",
-    image: "/products/perfume.jpg",
-    description: "Fragancia aromática e intensamente amaderada para un estilo sofisticado."
-  }
+    image: "/images/producto4.png",
+    category: "Categoría",
+    stock: 3,
+  },
 ];

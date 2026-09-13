@@ -111,7 +111,7 @@ export default function CartPage() {
                     {/* Subtotal e botón de quitar */}
                     <div className="text-right">
                       <p className="font-bold">
-                        {formatPrice(item.numericPrice * item.quantity)}
+                        {formatPrice((item.numericPrice ?? item.price) * item.quantity)}
                       </p>
                     </div>
 

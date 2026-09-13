@@ -1,29 +1,25 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Product, CartItem } from "../types/product";
-import Toast from "../components/Toast";
 
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: Product) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeFromCart: (id: string | number) => void;
+  updateQuantity: (id: string | number, quantity: number) => void;
   clearCart: () => void;
-  totalItems: number;
   totalPrice: number;
+  totalItems: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  // 1. Cargar del localStorage sólo al montar en el cliente
   useEffect(() => {
-    const savedCart = localStorage.getItem("datawave_cart");
+    const savedCart = localStorage.getItem("datawave-cart");
     if (savedCart) {
       try {
         setCart(JSON.parse(savedCart));
@@ -31,54 +27,50 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         console.error("Error al cargar el carrito", e);
       }
     }
-    setIsInitialized(true);
   }, []);
 
-  // 2. Guardar en localStorage SÓLO después de la lectura inicial
   useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem("datawave_cart", JSON.stringify(cart));
-    }
-  }, [cart, isInitialized]);
+    localStorage.setItem("datawave-cart", JSON.stringify(cart));
+  }, [cart]);
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
-      const existing = prevCart.find((item) => item.id === product.id);
+      const existing = prevCart.find((item) => String(item.id) === String(product.id));
       if (existing) {
         return prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          String(item.id) === String(product.id)
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
       return [...prevCart, { ...product, quantity: 1 }];
     });
-    setToastMessage(`"${product.name}" se agregó al carrito`);
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+  const removeFromCart = (id: string | number) => {
+    setCart((prevCart) => prevCart.filter((item) => String(item.id) !== String(id)));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (id: string | number, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(id);
       return;
     }
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
+        String(item.id) === String(id) ? { ...item, quantity } : item
       )
     );
   };
 
   const clearCart = () => setCart([]);
 
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  
-  // Calcula el total contemplando `numericPrice` o `price`
-  const totalPrice = cart.reduce((sum, item) => {
-    const itemPrice = item.numericPrice ?? (typeof item.price === "number" ? item.price : 0);
-    return sum + itemPrice * item.quantity;
+  const totalPrice = cart.reduce((acc, item) => {
+    const priceNum = typeof item.price === "number" ? item.price : 0;
+    return acc + priceNum * item.quantity;
   }, 0);
+
+  const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
     <CartContext.Provider
@@ -88,14 +80,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         updateQuantity,
         clearCart,
-        totalItems,
         totalPrice,
+        totalItems,
       }}
     >
       {children}
-      {toastMessage && (
-        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
-      )}
     </CartContext.Provider>
   );
 }
