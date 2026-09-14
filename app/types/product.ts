@@ -1,11 +1,15 @@
 export interface Product {
-  id: number | string;
+  id: string | number;
   name: string;
-  description?: string;
   price: number | string;
   numericPrice?: number;
   image?: string;
   imageUrl?: string;
-  category?: string | { name: string }; // <--- Permite string u objeto
+  category?: string | { name: string };
   stock?: number;
+  description?: string;
+}
+
+export interface CartItem extends Product {
+  quantity: number;
 }

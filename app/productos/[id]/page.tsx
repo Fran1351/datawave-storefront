@@ -20,12 +20,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const formattedPrice =
-    typeof product.price === "number"
+    typeof product.price === "number" || !isNaN(Number(product.price))
       ? new Intl.NumberFormat("es-AR", {
           style: "currency",
           currency: "ARS",
           maximumFractionDigits: 0,
-        }).format(product.price)
+        }).format(Number(product.price))
       : product.price;
 
   return {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: product.name,
       description: product.description,
-      images: [{ url: product.image || product.imageUrl || "/placeholder.png" }],
+      images: [{ url: product.image || product.image || "/placeholder.png" }],
     },
   };
 }
@@ -51,20 +51,21 @@ export default async function ProductDetailPage({ params }: Props) {
     id: rawProduct.id,
     name: rawProduct.name,
     price: rawProduct.price,
-    numericPrice: typeof rawProduct.price === "number" ? rawProduct.price : undefined,
-    image: rawProduct.image || rawProduct.imageUrl || "/placeholder.png",
-    category: rawProduct.category || "General",
+    numericPrice: typeof rawProduct.price === "number" ? rawProduct.price : Number(rawProduct.price) || undefined,
+    image: rawProduct.image || rawProduct.image || "/placeholder.png",
+    imageUrl: rawProduct.image || rawProduct.image || "/placeholder.png",
+    category: typeof rawProduct.category === "object" ? (rawProduct.category as any)?.name : rawProduct.category || "General",
     stock: rawProduct.stock ?? 10,
     description: rawProduct.description || "",
   };
 
   const displayPrice =
-    typeof product.price === "number"
+    typeof product.price === "number" || !isNaN(Number(product.price))
       ? new Intl.NumberFormat("es-AR", {
           style: "currency",
           currency: "ARS",
           maximumFractionDigits: 0,
-        }).format(product.price)
+        }).format(Number(product.price))
       : product.price;
 
   return (
@@ -72,7 +73,7 @@ export default async function ProductDetailPage({ params }: Props) {
       <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div className="bg-white rounded-3xl p-8 relative aspect-square">
           <Image
-            src={product.image || "/placeholder.png"}
+            src={product.image || product.image || "/placeholder.png"}
             alt={product.name}
             fill
             priority
@@ -81,18 +82,21 @@ export default async function ProductDetailPage({ params }: Props) {
         </div>
 
         <div>
-          <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest">
-            {product.category}
-          </span>
-          <h1 className="text-4xl font-black mt-2">{product.name}</h1>
-          <p className="text-3xl font-bold text-white mt-4">{displayPrice}</p>
-          <p className="text-zinc-400 mt-6 leading-relaxed">{product.description}</p>
+  <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest">
+    {typeof product.category === "object" && product.category !== null
+  ? (product.category as { name: string }).name
+  : product.category || "General"}
+  </span>
+  <h1 className="text-4xl font-black mt-2">{product.name}</h1>
+  <p className="text-3xl font-bold text-white mt-4">{displayPrice}</p>
+  <p className="text-zinc-400 mt-6 leading-relaxed">{product.description}</p>
 
-          <div className="mt-8">
-            <ProductActions product={product} />
-          </div>
+  <div className="mt-8">
+    <ProductActions product={product} />
+  </div>
+</div>
         </div>
-      </div>
+      
     </main>
   );
 }

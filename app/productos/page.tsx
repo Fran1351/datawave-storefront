@@ -219,9 +219,9 @@ export default function Productos() {
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
-                  id={product.id}
+                  id={Number(product.id)}
                   name={product.name}
-                  price={product.price}
+                  price={Number(product.price)}
                   image={product.image}
                   stock={product.stock}
                 />
