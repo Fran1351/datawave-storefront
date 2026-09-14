@@ -223,7 +223,7 @@ export default function Productos() {
                   name={product.name}
                   price={Number(product.price)}
                   image={product.image}
-                  stock={product.stock}
+                  stock={Number(product.stock)}
                 />
               ))}
 
