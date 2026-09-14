@@ -1,8 +1,6 @@
 "use server";
 
-import { Product, products, MOCK_PRODUCTS } from "@/lib/products";
-
-export { MOCK_PRODUCTS };
+import { Product, MOCK_PRODUCTS } from "@/lib/products";
 
 export async function getProducts(): Promise<{
   success: boolean;

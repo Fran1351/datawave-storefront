@@ -1,8 +1,8 @@
 "use client";
 
-import Navbar from "../components/Navbar";
-import { products } from "../data/products";
-import ProductCard from "../components/ProductCard";
+import Navbar from "@/app/components/Navbar";
+import { products } from "@/app/data/products";
+import ProductCard from "@/app/components/ProductCard";
 import { useState } from "react";
 
 export default function Productos() {
