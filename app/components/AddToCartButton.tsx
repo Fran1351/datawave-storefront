@@ -1,7 +1,8 @@
 "use client";
 
-import { useCart } from "../context/CartContext";
-import { Product } from "../types/product";
+import { useCart } from "@/app/context/CartContext";
+import { Product } from "@/app/types/product";
+import { useEffect, useState } from "react";
 
 interface AddToCartButtonProps {
   product: Product;
@@ -9,16 +10,41 @@ interface AddToCartButtonProps {
 
 export default function AddToCartButton({ product }: AddToCartButtonProps) {
   const { addToCart } = useCart();
+  const [currentStock, setCurrentStock] = useState<number>(product.stock ?? 0);
 
-  const stock = product.stock ?? 0;
-  const hasStock = stock > 0;
+  useEffect(() => {
+    const updateStockFromStorage = () => {
+      const savedStock = localStorage.getItem("datawave-stock");
+      if (savedStock) {
+        try {
+          const parsedStock = JSON.parse(savedStock);
+          if (parsedStock[product.id] !== undefined) {
+            setCurrentStock(Number(parsedStock[product.id]));
+            return;
+          }
+        } catch (error) {
+          console.error("Error leyendo stock local:", error);
+        }
+      }
+      setCurrentStock(product.stock ?? 0);
+    };
+
+    updateStockFromStorage();
+
+    window.addEventListener("stockUpdated", updateStockFromStorage);
+    return () => {
+      window.removeEventListener("stockUpdated", updateStockFromStorage);
+    };
+  }, [product.id, product.stock]);
+
+  const hasStock = currentStock > 0;
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Evita la navegación si el botón está envuelto en un <Link>
     e.preventDefault();
     e.stopPropagation();
 
-    addToCart(product);
+    if (!hasStock) return;
+    addToCart({ ...product, stock: currentStock });
   };
 
   return (

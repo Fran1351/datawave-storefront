@@ -4,14 +4,18 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/app/types/product";
+import AddToCartButton from "@/app/components/AddToCartButton";
 
 export default function AnimatedProductCard({
   product,
-  onAddToCart,
 }: {
   product: Product;
-  onAddToCart: (p: Product) => void;
+  onAddToCart?: (p: Product) => void;
 }) {
+  const displayPrice = typeof product.price === "number" 
+    ? `$${product.price.toLocaleString("es-AR")}` 
+    : product.price;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -24,7 +28,7 @@ export default function AnimatedProductCard({
         <Link href={`/productos/${product.id}`}>
           <div className="bg-white rounded-2xl relative aspect-square overflow-hidden">
             <Image
-              src={product.image || "/placeholder.png"}
+              src={product.image || product.imageUrl || "/placeholder.png"}
               alt={product.name}
               fill
               className="object-contain p-6 group-hover:scale-105 transition duration-500"
@@ -35,18 +39,13 @@ export default function AnimatedProductCard({
           <span className="text-zinc-500 text-xs font-mono uppercase tracking-wider">
             {product.category}
           </span>
-          <h3 className="text-xl font-bold mt-1">{product.name}</h3>
-          <p className="text-cyan-400 font-bold mt-2">{product.price}</p>
+          <h3 className="text-xl font-bold mt-1 text-white">{product.name}</h3>
+          <p className="text-cyan-400 font-bold mt-2">{displayPrice}</p>
         </div>
       </div>
 
-      <div className="flex gap-2 mt-6">
-        <button
-          onClick={() => onAddToCart(product)}
-          className="w-full bg-white hover:bg-cyan-300 text-black font-bold py-3 rounded-full text-sm transition"
-        >
-          Añadir al Carrito
-        </button>
+      <div className="mt-6">
+        <AddToCartButton product={product} />
       </div>
     </motion.div>
   );

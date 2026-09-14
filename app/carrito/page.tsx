@@ -8,7 +8,7 @@ import { useCart } from "@/app/context/CartContext";
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Formatear precio numérico a moneda local
   const formatPrice = (amount: number) => {
@@ -19,10 +19,39 @@ export default function CartPage() {
     }).format(amount);
   };
 
-  const handleCheckout = (e: React.FormEvent) => {
+  const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    setOrderComplete(true);
-    clearCart();
+    setIsLoading(true);
+
+    try {
+      const items = cart.map((item) => ({
+        id: String(item.id),
+        title: item.name,
+        unit_price: Number(item.numericPrice ?? item.price),
+        quantity: Number(item.quantity),
+        currency_id: "ARS",
+      }));
+
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ items }),
+      });
+
+      const data = await response.json();
+
+      if (data.init_point) {
+        window.location.href = data.init_point;
+      } else {
+        alert("Hubo un error al iniciar el pago con Mercado Pago.");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error en el checkout:", error);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -192,84 +221,61 @@ export default function CartPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 max-w-md w-full relative">
             <button
-              onClick={() => {
-                setIsCheckingOut(false);
-                setOrderComplete(false);
-              }}
+              onClick={() => setIsCheckingOut(false)}
               className="absolute top-6 right-6 text-zinc-400 hover:text-white"
             >
               ✕
             </button>
 
-            {orderComplete ? (
-              <div className="text-center py-6">
-                <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  ✓
-                </div>
-                <h3 className="text-2xl font-bold mb-2">¡Pedido realizado!</h3>
-                <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
-                  Gracias por tu compra. Te enviamos los detalles de la orden a tu correo.
-                </p>
-                <button
-                  onClick={() => {
-                    setIsCheckingOut(false);
-                    setOrderComplete(false);
-                  }}
-                  className="w-full bg-white text-black font-bold py-3 rounded-full hover:bg-zinc-200 transition"
-                >
-                  Aceptar
-                </button>
+            <form onSubmit={handleCheckout} className="space-y-4">
+              <h3 className="text-xl font-bold mb-4">Datos de envío</h3>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1">
+                  Nombre Completo
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Juan Pérez"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-500"
+                />
               </div>
-            ) : (
-              <form onSubmit={handleCheckout} className="space-y-4">
-                <h3 className="text-xl font-bold mb-4">Datos de envío</h3>
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-400 mb-1">
-                    Nombre Completo
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Juan Pérez"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-400 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="juan@ejemplo.com"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-400 mb-1">
-                    Dirección de entrega
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Av. Corrientes 1234"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-500"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="juan@ejemplo.com"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1">
+                  Dirección de entrega
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Av. Corrientes 1234"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-500"
+                />
+              </div>
 
-                <div className="pt-4 border-t border-zinc-800 flex justify-between items-center mb-4">
-                  <span className="text-sm text-zinc-400">Total a pagar:</span>
-                  <span className="font-bold text-lg">{formatPrice(totalPrice)}</span>
-                </div>
+              <div className="pt-4 border-t border-zinc-800 flex justify-between items-center mb-4">
+                <span className="text-sm text-zinc-400">Total a pagar:</span>
+                <span className="font-bold text-lg">{formatPrice(totalPrice)}</span>
+              </div>
 
-                <button
-                  type="submit"
-                  className="w-full bg-white text-black font-bold py-4 rounded-full hover:bg-zinc-200 transition"
-                >
-                  Confirmar pedido
-                </button>
-              </form>
-            )}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-white text-black font-bold py-4 rounded-full hover:bg-zinc-200 transition disabled:opacity-50"
+              >
+                {isLoading ? "Redirigiendo a Mercado Pago..." : "Pagar con Mercado Pago"}
+              </button>
+            </form>
           </div>
         </div>
       )}

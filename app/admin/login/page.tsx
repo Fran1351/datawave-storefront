@@ -22,31 +22,31 @@ export default function AdminLogin() {
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setPassword(e.target.value);
-    if (error) setError(""); // Limpia el mensaje de error al tipear
+    if (error) setError("");
   }
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-md bg-zinc-900 rounded-3xl p-8 border border-zinc-800/80">
-        <h1 className="text-3xl font-bold">Panel de administración</h1>
+      <div className="w-full max-w-md bg-zinc-900 rounded-3xl p-8 border border-zinc-800/80 shadow-2xl">
+        <h1 className="text-3xl font-bold tracking-tight">Panel de administración</h1>
 
-        <p className="text-zinc-400 mt-2 mb-8">
-          Ingresá la contraseña para continuar.
+        <p className="text-zinc-400 mt-2 mb-8 text-sm">
+          Ingresá la contraseña para continuar con la gestión.
         </p>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
-          <div>
+        <form onSubmit={handleLogin} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
             <input
               type="password"
               value={password}
               onChange={handleInputChange}
               placeholder="Contraseña"
-              className="w-full bg-zinc-800 text-white rounded-xl px-4 py-3 outline-none border border-transparent focus:border-zinc-600 transition placeholder:text-zinc-500"
+              className="w-full bg-zinc-800/70 text-white rounded-xl px-4 py-3.5 outline-none border border-zinc-700/50 focus:border-zinc-500 transition placeholder:text-zinc-500 text-sm"
               autoFocus
             />
 
             {error && (
-              <p className="text-red-400 text-sm mt-2 font-medium">
+              <p className="text-red-400 text-xs font-medium pl-1 animate-fadeIn">
                 {error}
               </p>
             )}
@@ -54,7 +54,7 @@ export default function AdminLogin() {
 
           <button
             type="submit"
-            className="w-full bg-white text-black py-3 rounded-full font-semibold hover:bg-zinc-200 transition active:scale-[0.99]"
+            className="w-full bg-white text-zinc-950 py-3.5 rounded-xl font-medium hover:bg-zinc-200 transition active:scale-[0.99] text-sm"
           >
             Entrar
           </button>

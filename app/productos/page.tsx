@@ -1,163 +1,300 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { products } from "@/app/data/products";
-import { Product } from "@/app/types/product";
-import AddToCartButton from "@/app/components/AddToCartButton";
+import Navbar from "../components/Navbar";
+import { products } from "../data/products";
+import ProductCard from "../components/ProductCard";
+import { useState } from "react";
 
-export default function CatalogPage() {
+export default function Productos() {
+  const [category, setCategory] = useState("Todos");
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("TODOS");
 
-  const categories = useMemo(() => {
-    const cats = (products as Product[])
-      .map((p) => p.category)
-      .filter((cat): cat is string => Boolean(cat));
-    return ["TODOS", ...Array.from(new Set(cats))];
-  }, []);
+  // CATEGORÍAS AUTOMÁTICAS
+  const categories = [
+    "Todos",
+    ...Array.from(
+      new Set(products.map((product) => product.category))
+    ),
+  ];
 
-  const filteredProducts = useMemo(() => {
-    return (products as Product[]).filter((product) => {
-      const matchesSearch = product.name
+  // FILTRADO
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory =
+      category === "Todos" ||
+      product.category === category;
+
+    const matchesSearch =
+      product.name
         .toLowerCase()
         .includes(search.toLowerCase());
-      const matchesCategory =
-        selectedCategory === "TODOS" || product.category === selectedCategory;
 
-      return matchesSearch && matchesCategory;
-    });
-  }, [search, selectedCategory]);
+    return matchesCategory && matchesSearch;
+  });
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white pt-32 pb-24 px-6 md:px-16 max-w-7xl mx-auto selection:bg-cyan-500 selection:text-black">
-      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-cyan-500/10 blur-[160px] pointer-events-none -z-10 rounded-full" />
+    <main className="min-h-screen bg-zinc-950 text-white">
+      <Navbar />
 
-      <div className="mb-10 text-center md:text-left">
-        <span className="text-xs font-mono text-cyan-400 tracking-widest uppercase">
-          CATÁLOGO EXCLUSIVO
-        </span>
-        <h1 className="text-4xl md:text-5xl font-black text-white mt-1 tracking-tight">
-          EQUIPAMIENTO DATAWAVE
-        </h1>
-        <p className="text-zinc-400 text-sm mt-2 max-w-xl">
-          Explorá nuestros componentes y periféricos de alto rendimiento diseñados para la máxima eficiencia.
-        </p>
-      </div>
+      {/* ENCABEZADO */}
+      <section className="px-8 md:px-20 pt-36 pb-10">
+        <div className="max-w-6xl mx-auto">
 
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 mb-12 bg-zinc-900/40 border border-zinc-800/80 p-4 rounded-2xl backdrop-blur-xl">
-        <div className="relative flex-1">
-          <svg
-            className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <input
-            type="text"
-            placeholder="Buscar por nombre..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-zinc-950/80 border border-zinc-800 rounded-xl pl-12 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400/80 transition"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-zinc-500 hover:text-white"
-            >
-              Limpiar
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${
-                selectedCategory === cat
-                  ? "bg-cyan-400 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]"
-                  : "bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {filteredProducts.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/20">
-          <p className="text-zinc-400 text-base font-medium">
-            No se encontraron productos que coincidan con la búsqueda.
+          <p className="text-zinc-500 uppercase tracking-[0.3em] text-sm font-semibold">
+            DataWave
           </p>
-          <button
-            onClick={() => {
-              setSearch("");
-              setSelectedCategory("TODOS");
-            }}
-            className="mt-4 text-xs font-mono text-cyan-400 underline hover:text-cyan-300"
-          >
-            Restablecer filtros
-          </button>
+
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mt-4">
+            Productos
+          </h1>
+
+          <p className="text-zinc-400 text-lg mt-5 max-w-xl">
+            Tecnología, accesorios y productos seleccionados
+            para mejorar tu día.
+          </p>
+
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
+      </section>
+
+      {/* BUSCADOR */}
+      <section className="px-8 md:px-20 pb-8">
+        <div className="max-w-6xl mx-auto">
+
+          <div className="relative max-w-2xl">
+
+            {/* LUPA */}
             <div
-              key={product.id}
-              className="group relative bg-zinc-900/30 border border-zinc-800/80 hover:border-cyan-500/40 rounded-3xl p-5 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]"
+              className="
+                absolute
+                left-5
+                top-1/2
+                -translate-y-1/2
+                pointer-events-none
+              "
             >
-              <div>
-                <Link
-                  href={`/productos/${product.id}`}
-                  className="block relative aspect-square w-full bg-white rounded-2xl overflow-hidden p-6 mb-4"
-                >
-                  <Image
-                    src={product.image || product.imageUrl || "/placeholder.png"}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
-                  />
-                </Link>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                  stroke="white"
+                  strokeWidth="2"
+                />
 
-                <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider">
-                  {product.category ?? "General"}
-                </span>
-                <Link href={`/productos/${product.id}`}>
-                  <h3 className="text-lg font-bold text-white mt-1 group-hover:text-cyan-300 transition line-clamp-1">
-                    {product.name}
-                  </h3>
-                </Link>
-                <p className="text-xs text-zinc-400 mt-2 line-clamp-2 leading-relaxed">
-                  {product.description}
-                </p>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-zinc-800/60 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-zinc-500 block font-mono">PRECIO</span>
-                  <span className="text-lg font-black text-white">
-                    ${product.price.toLocaleString("es-AR")}
-                  </span>
-                </div>
-
-                <AddToCartButton product={product} />
-              </div>
+                <path
+                  d="M16 16L21 21"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
-          ))}
+
+            <input
+              type="text"
+              placeholder="Buscar productos..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="
+                w-full
+                bg-zinc-900
+                border
+                border-zinc-700
+                rounded-2xl
+                py-4
+                pl-14
+                pr-14
+                text-white
+                placeholder:text-zinc-600
+                outline-none
+                focus:border-zinc-500
+                transition
+              "
+            />
+
+            {/* LIMPIAR */}
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="
+                  absolute
+                  right-4
+                  top-1/2
+                  -translate-y-1/2
+                  w-8
+                  h-8
+                  rounded-full
+                  bg-zinc-800
+                  text-zinc-400
+                  hover:text-white
+                  hover:bg-zinc-700
+                  transition
+                "
+                aria-label="Limpiar búsqueda"
+              >
+                ×
+              </button>
+            )}
+
+          </div>
+
         </div>
-      )}
+      </section>
+
+      {/* CATEGORÍAS */}
+      <section className="px-8 md:px-20 pb-12">
+        <div className="max-w-6xl mx-auto">
+
+          <div className="flex flex-wrap gap-3">
+
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={
+                  category === cat
+                    ? `
+                      bg-white
+                      text-black
+                      px-6
+                      py-3
+                      rounded-full
+                      font-semibold
+                      transition
+                    `
+                    : `
+                      bg-zinc-900
+                      text-zinc-400
+                      border
+                      border-zinc-800
+                      px-6
+                      py-3
+                      rounded-full
+                      hover:text-white
+                      hover:border-zinc-600
+                      transition
+                    `
+                }
+              >
+                {cat}
+              </button>
+            ))}
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* PRODUCTOS */}
+      <section className="px-8 md:px-20 pb-24">
+        <div className="max-w-6xl mx-auto">
+
+          {/* CONTADOR */}
+          <div className="flex justify-between items-center mb-8">
+
+            <p className="text-zinc-500 text-sm">
+              {filteredProducts.length}{" "}
+              {filteredProducts.length === 1
+                ? "producto"
+                : "productos"}
+            </p>
+
+            <p className="text-zinc-600 text-sm">
+              {category}
+            </p>
+
+          </div>
+
+          {/* RESULTADOS */}
+          {filteredProducts.length > 0 ? (
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  price={product.price}
+                  image={product.image}
+                  stock={product.stock}
+                />
+              ))}
+
+            </div>
+
+          ) : (
+
+            /* SIN RESULTADOS */
+            <div className="text-center py-24">
+
+              <div className="flex justify-center mb-6">
+
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="11"
+                    cy="11"
+                    r="7"
+                    stroke="rgb(82 82 91)"
+                    strokeWidth="2"
+                  />
+
+                  <path
+                    d="M16 16L21 21"
+                    stroke="rgb(82 82 91)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+
+              </div>
+
+              <h2 className="text-2xl font-bold">
+                No encontramos productos
+              </h2>
+
+              <p className="text-zinc-500 mt-3">
+                Probá con otro nombre o categoría.
+              </p>
+
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setCategory("Todos");
+                }}
+                className="
+                  mt-6
+                  bg-white
+                  text-black
+                  px-6
+                  py-3
+                  rounded-full
+                  font-semibold
+                  hover:bg-zinc-200
+                  transition
+                "
+              >
+                Ver todos los productos
+              </button>
+
+            </div>
+
+          )}
+
+        </div>
+      </section>
     </main>
   );
 }

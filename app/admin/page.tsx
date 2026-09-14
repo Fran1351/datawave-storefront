@@ -1,10 +1,9 @@
 "use client";
 
-import { products } from "../data/products";
+import { MOCK_PRODUCTS as products, Product } from "@/lib/products";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Product } from "@/app/types/product";
 
 export default function Admin() {
   const router = useRouter();
@@ -89,13 +88,13 @@ export default function Admin() {
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold">Administración</h1>
-            <p className="text-zinc-400 mt-2">Controlá el stock de tus productos.</p>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Administración</h1>
+            <p className="text-zinc-400 mt-2 text-sm">Controlá el stock de tus productos en tiempo real.</p>
           </div>
 
           <button
             onClick={handleLogout}
-            className="w-fit border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 hover:text-white px-5 py-2.5 rounded-full text-sm transition"
+            className="w-fit border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 hover:text-white px-5 py-2.5 rounded-xl text-sm transition"
           >
             Cerrar sesión
           </button>
@@ -118,9 +117,9 @@ export default function Admin() {
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-bold">{product.name}</h2>
-                  <p className="text-zinc-400 mt-1">
-                    ${product.price.toLocaleString("es-AR")}
+                  <h2 className="text-lg font-bold">{product.name}</h2>
+                  <p className="text-zinc-400 mt-1 text-sm">
+                    {product.price}
                   </p>
                 </div>
               </div>
@@ -128,21 +127,21 @@ export default function Admin() {
               <div className="flex items-center gap-5">
                 <button
                   onClick={() => decrease(product.id)}
-                  className="w-10 h-10 bg-zinc-800 rounded-full hover:bg-zinc-700 text-xl font-bold transition flex items-center justify-center"
+                  className="w-10 h-10 bg-zinc-800 rounded-xl hover:bg-zinc-700 text-lg font-bold transition flex items-center justify-center active:scale-95"
                 >
                   −
                 </button>
 
-                <div className="text-center min-w-20">
-                  <p className="text-2xl font-bold">
+                <div className="text-center min-w-16">
+                  <p className="text-xl font-bold">
                     {stock[product.id] ?? 0}
                   </p>
-                  <p className="text-zinc-500 text-sm">unidades</p>
+                  <p className="text-zinc-500 text-xs">unidades</p>
                 </div>
 
                 <button
                   onClick={() => increase(product.id)}
-                  className="w-10 h-10 bg-zinc-800 rounded-full hover:bg-zinc-700 text-xl font-bold transition flex items-center justify-center"
+                  className="w-10 h-10 bg-zinc-800 rounded-xl hover:bg-zinc-700 text-lg font-bold transition flex items-center justify-center active:scale-95"
                 >
                   +
                 </button>

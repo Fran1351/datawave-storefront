@@ -12,7 +12,6 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
 
-  // Formatear precio para mantener consistencia con el carrito principal
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
@@ -39,20 +38,20 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="flex items-center justify-between pb-6 border-b border-zinc-900">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold">Tu Carrito</h2>
-                <span className="bg-cyan-500/20 text-cyan-400 text-xs px-2.5 py-1 rounded-full font-mono">
+                <span className="bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs px-2.5 py-0.5 rounded-full font-mono">
                   {totalItems}
                 </span>
               </div>
               <button
                 onClick={onClose}
-                className="text-zinc-500 hover:text-white transition p-2"
+                className="text-zinc-500 hover:text-white transition p-2 rounded-lg hover:bg-zinc-900"
               >
                 ✕
               </button>
             </div>
 
             {/* Lista de Productos */}
-            <div className="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+            <div className="mt-6 space-y-4 max-h-[55vh] overflow-y-auto pr-2">
               {cart.length === 0 ? (
                 <div className="py-16 text-center text-zinc-500">
                   <p className="text-sm">El carrito está vacío.</p>
@@ -61,11 +60,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 cart.map((item) => (
                   <div
                     key={item.id}
-                    className="flex gap-4 p-3 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 items-center justify-between"
+                    className="flex gap-4 p-3 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 items-center justify-between"
                   >
                     <div className="relative w-16 h-16 bg-white rounded-xl overflow-hidden shrink-0">
                       <Image
-                        src={item.image || "/placeholder.png"}
+                        src={item.image || item.imageUrl || "/placeholder.png"}
                         alt={item.name}
                         fill
                         className="object-contain p-2"
@@ -73,8 +72,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold truncate">{item.name}</h4>
-                      <p className="text-xs text-cyan-400 font-bold mt-0.5">
+                      <h4 className="text-xs font-bold truncate text-white">{item.name}</h4>
+                      <p className="text-xs text-cyan-400 font-bold mt-1">
                         {formatPrice((item.numericPrice ?? item.price) as number)}
                       </p>
                       
@@ -82,14 +81,14 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       <div className="flex items-center gap-2 mt-2">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="w-6 h-6 rounded-md bg-zinc-800 hover:bg-zinc-700 text-xs flex items-center justify-center"
+                          className="w-6 h-6 rounded-md bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-xs flex items-center justify-center text-zinc-300 transition"
                         >
                           -
                         </button>
-                        <span className="text-xs font-mono">{item.quantity}</span>
+                        <span className="text-xs font-mono text-zinc-200">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="w-6 h-6 rounded-md bg-zinc-800 hover:bg-zinc-700 text-xs flex items-center justify-center"
+                          className="w-6 h-6 rounded-md bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-xs flex items-center justify-center text-zinc-300 transition"
                         >
                           +
                         </button>
@@ -98,7 +97,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                     <button
                       onClick={() => removeFromCart(item.id)}
-                      className="text-zinc-500 hover:text-red-400 text-xs p-2"
+                      className="text-zinc-500 hover:text-red-400 text-xs p-2 transition"
+                      title="Eliminar producto"
                     >
                       ✕
                     </button>
@@ -112,16 +112,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           <div className="border-t border-zinc-900 pt-6">
             <div className="flex justify-between items-center mb-6">
               <span className="text-sm text-zinc-400">Total Estimado</span>
-              <span className="text-2xl font-black text-white">
+              <span className="text-2xl font-black text-cyan-400">
                 {formatPrice(totalPrice)}
               </span>
             </div>
 
             <div className="space-y-3">
               <Link
-                href="/carrito"
+                href="/checkout"
                 onClick={onClose}
-                className="w-full block text-center bg-white hover:bg-cyan-300 text-black font-bold py-3.5 rounded-full text-sm transition"
+                className="w-full block text-center bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-extrabold py-3.5 rounded-full text-sm transition shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)]"
               >
                 Finalizar Compra
               </Link>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCart } from "../context/CartContext";
+import { useCart } from "@/app/context/CartContext";
 
 type ProductDetailProps = {
   id: number | string;
@@ -23,7 +23,6 @@ export default function ProductDetail({
 }: ProductDetailProps) {
   const { addToCart } = useCart();
 
-  // Convierte el precio a número de forma segura si viene como string (ej: "$25.000" -> 25000)
   const numericPrice =
     typeof price === "number"
       ? price
@@ -43,7 +42,7 @@ export default function ProductDetail({
             stock,
           })
         }
-        className="w-full bg-white text-black py-4 rounded-full font-bold hover:bg-zinc-200 transition"
+        className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-extrabold py-4 rounded-full text-sm transition shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)]"
       >
         Agregar al carrito
       </button>
@@ -54,7 +53,7 @@ export default function ProductDetail({
         )}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="block w-full border border-zinc-700 py-4 rounded-full text-center font-semibold hover:bg-zinc-900 transition"
+        className="block w-full bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800 hover:border-zinc-700 py-4 rounded-full text-center text-xs font-bold transition"
       >
         Comprar por WhatsApp
       </a>

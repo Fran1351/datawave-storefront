@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getProducts } from "./actions/products";
-// El botón de "Añadir al Carrito" que interactúa con el carrito global se mantiene en un subcomponente o se adapta.
 
 export default async function Home() {
   const { success, data: products, error } = await getProducts();
@@ -129,7 +128,7 @@ export default async function Home() {
           <p className="text-red-400 text-center py-10">Error al conectar con la base de datos.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product) => (
+            {featuredProducts.map((product: any) => (
               <div
                 key={product.id}
                 className="group relative bg-zinc-900/30 border border-zinc-800/80 hover:border-cyan-500/50 rounded-3xl p-6 transition-all duration-500 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] flex flex-col justify-between"
@@ -138,7 +137,7 @@ export default async function Home() {
                   <Link href={`/productos/${product.id}`}>
                     <div className="relative aspect-square bg-white/95 rounded-2xl overflow-hidden p-6">
                       <Image
-                        src={product.imageUrl}
+                        src={product.imageUrl || product.image || "/placeholder.png"}
                         alt={product.name}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -149,24 +148,23 @@ export default async function Home() {
 
                   <div className="mt-6">
                     <span className="text-xs font-mono text-cyan-400/80 uppercase tracking-wider">
-                      {product.category?.name || "Hardware"}
+                      {typeof product.category === "object" ? product.category?.name : product.category || "Hardware"}
                     </span>
                     <h3 className="text-xl font-bold mt-1 text-white group-hover:text-cyan-300 transition">
                       {product.name}
                     </h3>
                     <p className="text-zinc-400 text-sm mt-2 line-clamp-2 leading-relaxed">
-                      {product.description}
+                      {product.description || "Sin descripción disponible."}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-8 flex items-center justify-between border-t border-zinc-800/80 pt-4">
                   <span className="text-xl font-bold text-white">
-                    ${product.price.toLocaleString("es-AR")}
+                    ${Number(product.price).toLocaleString("es-AR")}
                   </span>
-                  {/* Nota: Para el botón de carrito que requiere interactividad del cliente, podemos conectarlo al contexto global */}
                   <span className="bg-white/10 text-zinc-300 px-4 py-2 rounded-full text-xs font-medium">
-                    Disponible ({product.stock})
+                    Disponible ({product.stock ?? 0})
                   </span>
                 </div>
               </div>

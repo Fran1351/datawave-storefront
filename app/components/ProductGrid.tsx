@@ -1,44 +1,50 @@
-import AnimatedProductCard from "@/app/components/AnimatedProductCard";
+import Image from "next/image";
+import Link from "next/link";
 import { products } from "@/app/data/products";
-import { Product } from "@/app/types/product";
 
-interface ProductGridProps {
-  onAddToCart?: (product: Product) => void;
-}
-
-export default function ProductGrid({ onAddToCart }: ProductGridProps) {
-  const handleAddToCart = (product: Product) => {
-    if (onAddToCart) {
-      onAddToCart(product);
-    } else {
-      console.log("Producto añadido:", product.name);
-    }
-  };
-
+export default function ProductGrid() {
   return (
-    <section>
-      <h2 className="text-4xl font-bold mb-10">
-        Productos destacados
-      </h2>
-
-      <div className="grid md:grid-cols-4 gap-8">
-        {products.map((product) => (
-          <AnimatedProductCard
-            key={product.id}
-            product={{
-              id: product.id,
-              name: product.name,
-              price: product.price,
-              numericPrice: typeof product.price === "number" ? product.price : undefined,
-              image: product.image || "/placeholder.png",
-              category: product.category || "General",
-              stock: product.stock,
-              description: product.description || "",
-            }}
-            onAddToCart={handleAddToCart}
-          />
-        ))}
-      </div>
-    </section>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {products.map((product) => (
+        <div 
+          key={product.id} 
+          className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col justify-between border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+        >
+          <div>
+            <div className="relative w-full h-48 bg-gray-100">
+              <Image 
+                src={product.image} 
+                alt={product.name} 
+                fill 
+                className="object-cover"
+              />
+            </div>
+            <div className="p-4">
+              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
+                {product.category}
+              </span>
+              <h3 className="text-lg font-medium text-gray-900 mt-1 line-clamp-1">
+                {product.name}
+              </h3>
+              <p className="text-xl font-bold text-gray-900 mt-2">
+                ${product.price}
+              </p>
+              <p className={`text-xs mt-1 ${product.stock > 0 ? "text-green-600" : "text-red-600"}`}>
+                {product.stock > 0 ? `Stock: ${product.stock}` : "Sin stock"}
+              </p>
+            </div>
+          </div>
+          
+          <div className="p-4 pt-0">
+            <Link 
+              href={`/products/${product.id}`}
+              className="w-full block text-center bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium"
+            >
+              Ver detalle
+            </Link>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

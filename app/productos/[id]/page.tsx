@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: product.name,
       description: product.description,
-      images: [{ url: product.image ?? "/placeholder.png" }],
+      images: [{ url: product.image || product.imageUrl || "/placeholder.png" }],
     },
   };
 }
@@ -52,7 +52,7 @@ export default async function ProductDetailPage({ params }: Props) {
     name: rawProduct.name,
     price: rawProduct.price,
     numericPrice: typeof rawProduct.price === "number" ? rawProduct.price : undefined,
-    image: rawProduct.image ?? "/placeholder.png",
+    image: rawProduct.image || rawProduct.imageUrl || "/placeholder.png",
     category: rawProduct.category || "General",
     stock: rawProduct.stock ?? 10,
     description: rawProduct.description || "",
@@ -72,7 +72,7 @@ export default async function ProductDetailPage({ params }: Props) {
       <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div className="bg-white rounded-3xl p-8 relative aspect-square">
           <Image
-            src={product.image as string}
+            src={product.image || "/placeholder.png"}
             alt={product.name}
             fill
             priority
