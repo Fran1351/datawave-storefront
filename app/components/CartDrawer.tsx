@@ -74,7 +74,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-bold truncate text-white">{item.name}</h4>
                       <p className="text-xs text-cyan-400 font-bold mt-1">
-                        {formatPrice((item.numericPrice ?? item.price) as number)}
+                       {formatPrice(Number(item.price))}
                       </p>
                       
                       {/* Controles de cantidad */}

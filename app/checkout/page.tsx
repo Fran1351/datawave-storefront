@@ -29,7 +29,7 @@ export default function CheckoutPage() {
       const items = cart.map((item) => ({
         id: String(item.id),
         title: item.name,
-        unit_price: Number(item.numericPrice ?? item.price),
+        unit_price: Number(item.price),
         quantity: Number(item.quantity),
         currency_id: "ARS",
       }));
@@ -186,10 +186,10 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-white truncate">{item.name}</p>
-                    <p className="text-xs text-zinc-400 mt-0.5">Cant: {item.quantity}</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">Cant: {Number(item.quantity)}</p>
                   </div>
                   <p className="text-sm font-bold text-white">
-                    ${((item.numericPrice ?? item.price) * item.quantity).toLocaleString("es-AR")}
+                    ${(Number(item.price) * Number(item.quantity)).toLocaleString("es-AR")}
                   </p>
                 </div>
               ))}
