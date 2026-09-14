@@ -36,9 +36,11 @@ export default function AnimatedProductCard({
           </div>
         </Link>
         <div className="mt-5">
-          <span className="text-zinc-500 text-xs font-mono uppercase tracking-wider">
-            {product.category}
-          </span>
+         <span className="text-zinc-500 text-xs font-mono uppercase tracking-wider">
+  {typeof product.category === 'object' && product.category !== null
+    ? (product.category as { name: string }).name
+    : String(product.category || '')}
+</span>
           <h3 className="text-xl font-bold mt-1 text-white">{product.name}</h3>
           <p className="text-cyan-400 font-bold mt-2">{displayPrice}</p>
         </div>
