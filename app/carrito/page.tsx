@@ -27,7 +27,7 @@ export default function CartPage() {
       const items = cart.map((item) => ({
         id: String(item.id),
         title: item.name,
-        unit_price: Number(item.numericPrice ?? item.price),
+        unit_price: Number(item.price),
         quantity: Number(item.quantity),
         currency_id: "ARS",
       }));
@@ -111,7 +111,7 @@ export default function CartPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-lg">{item.name}</h3>
-                      <p className="text-zinc-400 text-sm">{item.price}</p>
+                      <p className="text-zinc-400 text-sm">Number(item.price)</p>
                     </div>
                   </div>
 
@@ -140,7 +140,7 @@ export default function CartPage() {
                     {/* Subtotal e botón de quitar */}
                     <div className="text-right">
                       <p className="font-bold">
-                        {formatPrice((item.numericPrice ?? item.price) * item.quantity)}
+                        {formatPrice((Number(item.price) || 0) * Number(item.quantity))}
                       </p>
                     </div>
 

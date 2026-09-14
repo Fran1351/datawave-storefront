@@ -47,17 +47,16 @@ export default async function ProductDetailPage({ params }: Props) {
     notFound();
   }
 
-  const product: Product = {
-    id: rawProduct.id,
-    name: rawProduct.name,
-    price: rawProduct.price,
-    numericPrice: typeof rawProduct.price === "number" ? rawProduct.price : Number(rawProduct.price) || undefined,
-    image: rawProduct.image || rawProduct.image || "/placeholder.png",
-    imageUrl: rawProduct.image || rawProduct.image || "/placeholder.png",
-    category: typeof rawProduct.category === "object" ? (rawProduct.category as any)?.name : rawProduct.category || "General",
-    stock: rawProduct.stock ?? 10,
-    description: rawProduct.description || "",
-  };
+ const product: Product = {
+  id: rawProduct.id,
+  name: rawProduct.name,
+  price: rawProduct.price,
+  image: rawProduct.image || "/placeholder.png",
+  imageUrl: rawProduct.image || "/placeholder.png",
+  category: typeof rawProduct.category === "object" ? (rawProduct.category as any)?.name : rawProduct.category || "General",
+  stock: rawProduct.stock ?? 10,
+  description: rawProduct.description || "",
+};
 
   const displayPrice =
     typeof product.price === "number" || !isNaN(Number(product.price))
