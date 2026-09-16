@@ -178,7 +178,7 @@ export default function CheckoutPage() {
                 <div key={item.id} className="flex items-center gap-4">
                   <div className="relative w-14 h-14 bg-white rounded-xl overflow-hidden shrink-0">
                     <Image
-                      src={item.imageUrl || item.image || "/placeholder.png"}
+                      src={item.image || item.image || "/placeholder.png"}
                       alt={item.name}
                       fill
                       className="object-contain p-2"

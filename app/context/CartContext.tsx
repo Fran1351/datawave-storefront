@@ -1,13 +1,17 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Product, CartItem } from "@/app/types/product";
+import { Product } from "@/app/types/product";
+
+type CartItem = Product & {
+  quantity: number;
+};
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product) => boolean;
   removeFromCart: (id: string | number) => void;
-  updateQuantity: (id: string | number, quantity: number) => void;
+  updateQuantity: (id: string | number, quantity: number) => boolean;
   clearCart: () => void;
   totalPrice: number;
   totalItems: number;
@@ -33,34 +37,63 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("datawave-cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: Product) => {
+  // Devuelve true si pudo agregar, false si chocó con el límite de stock
+  const addToCart = (product: Product): boolean => {
+    const stock = Number(product.stock ?? 0);
+    let added = true;
+
     setCart((prevCart) => {
       const existing = prevCart.find((item) => String(item.id) === String(product.id));
+
       if (existing) {
+        if (existing.quantity >= stock) {
+          added = false;
+          return prevCart;
+        }
         return prevCart.map((item) =>
           String(item.id) === String(product.id)
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + 1, stock }
             : item
         );
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+
+      if (stock <= 0) {
+        added = false;
+        return prevCart;
+      }
+
+      return [...prevCart, { ...product, stock, quantity: 1 }];
     });
+
+    return added;
   };
 
   const removeFromCart = (id: string | number) => {
     setCart((prevCart) => prevCart.filter((item) => String(item.id) !== String(id)));
   };
 
-  const updateQuantity = (id: string | number, quantity: number) => {
+  // Devuelve true si pudo aplicar la cantidad pedida, false si la topeó al stock disponible
+  const updateQuantity = (id: string | number, quantity: number): boolean => {
     if (quantity <= 0) {
       removeFromCart(id);
-      return;
+      return true;
     }
+
+    let withinStock = true;
+
     setCart((prevCart) =>
-      prevCart.map((item) =>
-        String(item.id) === String(id) ? { ...item, quantity } : item
-      )
+      prevCart.map((item) => {
+        if (String(item.id) !== String(id)) return item;
+        const stock = Number(item.stock ?? 0);
+        if (quantity > stock) {
+          withinStock = false;
+          return { ...item, quantity: stock };
+        }
+        return { ...item, quantity };
+      })
     );
+
+    return withinStock;
   };
 
   const clearCart = () => setCart([]);

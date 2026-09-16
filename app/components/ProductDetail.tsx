@@ -33,7 +33,7 @@ export default function ProductDetail({
       <button
         onClick={() =>
           addToCart({
-            id,
+            id: Number(id),
             name,
             description,
             price: numericPrice,

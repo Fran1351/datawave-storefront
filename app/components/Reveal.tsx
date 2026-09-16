@@ -1,57 +1,17 @@
+// app/components/Reveal.tsx
 "use client";
 
-import { useEffect, useRef, useState, ReactNode } from "react";
+import { motion } from "framer-motion";
+import { ReactNode } from "react";
 
-type RevealProps = {
-  children: ReactNode;
-  className?: string;
-};
-
-export default function Reveal({
-  children,
-  className = "",
-}: RevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const element = ref.current;
-
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      {
-        threshold: 0.15,
-      }
-    );
-
-    observer.observe(element);
-
-    return () => observer.disconnect();
-  }, []);
-
+export function Reveal({ children }: { children: ReactNode }) {
   return (
-    <div
-      ref={ref}
-      className={`
-        transition-all
-        duration-1000
-        ease-out
-        ${
-          visible
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-12"
-        }
-        ${className}
-      `}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

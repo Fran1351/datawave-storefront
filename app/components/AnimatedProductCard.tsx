@@ -28,7 +28,7 @@ export default function AnimatedProductCard({
         <Link href={`/productos/${product.id}`}>
           <div className="bg-white rounded-2xl relative aspect-square overflow-hidden">
             <Image
-              src={product.image || product.imageUrl || "/placeholder.png"}
+              src={product.image || product.image || "/placeholder.png"}
               alt={product.name}
               fill
               className="object-contain p-6 group-hover:scale-105 transition duration-500"

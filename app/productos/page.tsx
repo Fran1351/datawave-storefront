@@ -1,24 +1,36 @@
 "use client";
 
 import Navbar from "@/app/components/Navbar";
-import { products } from "@/app/data/products";
-import ProductCard from "@/app/components/ProductCard";
-import { useState } from "react";
+import { MOCK_PRODUCTS } from "@/app/data/products";
+import { ProductCard } from "@/app/components/ProductCard";
+import { useState, useMemo } from "react";
+import { useCart } from "@/app/context/CartContext";
+
+type SortOption = "newest" | "alphabetical" | "price-asc" | "price-desc";
+
+const SORT_LABELS: Record<SortOption, string> = {
+  newest: "Novedad",
+  alphabetical: "Alfabético (A-Z)",
+  "price-asc": "Precio: menor a mayor",
+  "price-desc": "Precio: mayor a menor",
+};
 
 export default function Productos() {
+  const { addToCart } = useCart();
   const [category, setCategory] = useState("Todos");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
-  // CATEGORÍAS AUTOMÁTICAS
+  // CATEGORÍAS AUTOMÁTicas
   const categories = [
     "Todos",
     ...Array.from(
-      new Set(products.map((product) => product.category))
+      new Set(MOCK_PRODUCTS.map((product) => product.category))
     ),
   ];
 
   // FILTRADO
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = MOCK_PRODUCTS.filter((product) => {
     const matchesCategory =
       category === "Todos" ||
       product.category === category;
@@ -31,6 +43,27 @@ export default function Productos() {
     return matchesCategory && matchesSearch;
   });
 
+  // ORDENADO (memoizado para no re-ordenar en cada render innecesario)
+  const sortedProducts = useMemo(() => {
+    const list = [...filteredProducts];
+
+    switch (sortBy) {
+      case "alphabetical":
+        return list.sort((a, b) =>
+          (a.name || "").localeCompare(b.name || "", "es", { sensitivity: "base" })
+        );
+      case "price-asc":
+        return list.sort((a, b) => Number(a.price) - Number(b.price));
+      case "price-desc":
+        return list.sort((a, b) => Number(b.price) - Number(a.price));
+      case "newest":
+      default:
+        // Asume que los últimos agregados a MOCK_PRODUCTS son los más nuevos.
+        // Si hay un campo de fecha (createdAt), reemplazar por ordenamiento por fecha.
+        return list.reverse();
+    }
+  }, [filteredProducts, sortBy]);
+
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       <Navbar />
@@ -38,7 +71,7 @@ export default function Productos() {
       {/* ENCABEZADO */}
       <section className="px-8 md:px-20 pt-36 pb-10">
         <div className="max-w-6xl mx-auto">
-
+        
           <p className="text-zinc-500 uppercase tracking-[0.3em] text-sm font-semibold">
             DataWave
           </p>
@@ -50,17 +83,18 @@ export default function Productos() {
           <p className="text-zinc-400 text-lg mt-5 max-w-xl">
             Tecnología, accesorios y productos seleccionados
             para mejorar tu día.
+        
           </p>
-
+        
         </div>
       </section>
 
       {/* BUSCADOR */}
       <section className="px-8 md:px-20 pb-8">
         <div className="max-w-6xl mx-auto">
-
+          
           <div className="relative max-w-2xl">
-
+          
             {/* LUPA */}
             <div
               className="
@@ -85,7 +119,7 @@ export default function Productos() {
                   stroke="white"
                   strokeWidth="2"
                 />
-
+               
                 <path
                   d="M16 16L21 21"
                   stroke="white"
@@ -141,18 +175,18 @@ export default function Productos() {
                 ×
               </button>
             )}
-
+       
           </div>
-
+       
         </div>
       </section>
 
       {/* CATEGORÍAS */}
       <section className="px-8 md:px-20 pb-12">
         <div className="max-w-6xl mx-auto">
-
+        
           <div className="flex flex-wrap gap-3">
-
+        
             {categories.map((cat) => (
               <button
                 key={cat}
@@ -185,57 +219,95 @@ export default function Productos() {
                 {cat}
               </button>
             ))}
-
+        
           </div>
-
+        
         </div>
       </section>
 
       {/* PRODUCTOS */}
       <section className="px-8 md:px-20 pb-24">
         <div className="max-w-6xl mx-auto">
-
-          {/* CONTADOR */}
-          <div className="flex justify-between items-center mb-8">
-
+          
+          {/* CONTADOR + ORDENAR */}
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
+          
             <p className="text-zinc-500 text-sm">
               {filteredProducts.length}{" "}
               {filteredProducts.length === 1
                 ? "producto"
                 : "productos"}
+              <span className="text-zinc-600"> · {category}</span>
             </p>
 
-            <p className="text-zinc-600 text-sm">
-              {category}
-            </p>
+            {/* SELECTOR DE ORDEN */}
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="
+                  appearance-none
+                  bg-zinc-900
+                  border
+                  border-zinc-700
+                  text-white
+                  text-sm
+                  font-medium
+                  rounded-xl
+                  pl-4
+                  pr-10
+                  py-2.5
+                  outline-none
+                  cursor-pointer
+                  hover:border-cyan-500/50
+                  focus:border-cyan-400
+                  focus:shadow-[0_0_15px_rgba(6,182,212,0.3)]
+                  transition-all
+                  duration-300
+                "
+              >
+                {(Object.keys(SORT_LABELS) as SortOption[]).map((option) => (
+                  <option key={option} value={option} className="bg-zinc-900 text-white">
+                    {SORT_LABELS[option]}
+                  </option>
+                ))}
+              </select>
 
+              {/* Flecha custom */}
+              <svg
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          
           </div>
 
           {/* RESULTADOS */}
-          {filteredProducts.length > 0 ? (
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
-              {filteredProducts.map((product) => (
+          {sortedProducts.length > 0 ? (
+           
+           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {sortedProducts.map((product) => (
                 <ProductCard
                   key={product.id}
-                  id={Number(product.id)}
-                  name={product.name}
-                  price={Number(product.price)}
-                  image={product.image}
-                  stock={Number(product.stock)}
+                  product={product}
+                  onAddToCart={addToCart}
                 />
               ))}
-
+           
             </div>
-
-          ) : (
-
+          
+        ) : (
+           
             /* SIN RESULTADOS */
+            
             <div className="text-center py-24">
-
+              
               <div className="flex justify-center mb-6">
-
+               
                 <svg
                   width="48"
                   height="48"
@@ -250,7 +322,7 @@ export default function Productos() {
                     stroke="rgb(82 82 91)"
                     strokeWidth="2"
                   />
-
+                 
                   <path
                     d="M16 16L21 21"
                     stroke="rgb(82 82 91)"
@@ -288,11 +360,10 @@ export default function Productos() {
               >
                 Ver todos los productos
               </button>
-
+            
             </div>
 
-          )}
-
+  )}
         </div>
       </section>
     </main>
