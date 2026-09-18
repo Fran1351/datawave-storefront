@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function CheckoutPendingPage() {
+function PendingContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("external_reference");
 
@@ -44,5 +45,13 @@ export default function CheckoutPendingPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function CheckoutPendingPage() {
+  return (
+    <Suspense fallback={null}>
+      <PendingContent />
+    </Suspense>
   );
 }
