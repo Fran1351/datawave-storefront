@@ -6,18 +6,35 @@ import { useRouter } from "next/navigation";
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-    if (password === "DataWave123") {
-      sessionStorage.setItem("datawave-admin", "true");
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Contraseña incorrecta");
+        setIsLoading(false);
+        return;
+      }
+
       router.push("/admin");
-      return;
+      router.refresh();
+    } catch (err) {
+      setError("Error al iniciar sesión. Intentá de nuevo.");
+      setIsLoading(false);
     }
-
-    setError("Contraseña incorrecta");
   }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -41,7 +58,8 @@ export default function AdminLogin() {
               value={password}
               onChange={handleInputChange}
               placeholder="Contraseña"
-              className="w-full bg-zinc-800/70 text-white rounded-xl px-4 py-3.5 outline-none border border-zinc-700/50 focus:border-zinc-500 transition placeholder:text-zinc-500 text-sm"
+              disabled={isLoading}
+              className="w-full bg-zinc-800/70 text-white rounded-xl px-4 py-3.5 outline-none border border-zinc-700/50 focus:border-zinc-500 transition placeholder:text-zinc-500 text-sm disabled:opacity-50"
               autoFocus
             />
 
@@ -54,9 +72,10 @@ export default function AdminLogin() {
 
           <button
             type="submit"
-            className="w-full bg-white text-zinc-950 py-3.5 rounded-xl font-medium hover:bg-zinc-200 transition active:scale-[0.99] text-sm"
+            disabled={isLoading}
+            className="w-full bg-white text-zinc-950 py-3.5 rounded-xl font-medium hover:bg-zinc-200 transition active:scale-[0.99] text-sm disabled:opacity-50"
           >
-            Entrar
+            {isLoading ? "Ingresando..." : "Entrar"}
           </button>
         </form>
       </div>

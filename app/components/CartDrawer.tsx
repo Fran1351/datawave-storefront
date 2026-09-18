@@ -1,7 +1,8 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/app/context/ToastContext";
 
@@ -22,13 +23,15 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose, items, onUpdateQuantity }: CartDrawerProps) {
+  const router = useRouter();
   const { showToast } = useToast();
 
   const total = items.reduce((acc, item) => acc + Number(item.price) * Number(item.quantity), 0);
 
-  const handleCheckout = () => {
-    showToast("Redirigiendo al medio de pago...");
-    // Lógica de redirección a checkout
+  const handleGoToCheckout = () => {
+    if (items.length === 0) return;
+    onClose();
+    router.push("/checkout");
   };
 
   return (
@@ -115,15 +118,15 @@ export function CartDrawer({ isOpen, onClose, items, onUpdateQuantity }: CartDra
             </div>
 
             {/* Barra inferior fija (Sticky Bottom Bar) para móviles y desktop */}
-            <div className="p-6 border-t border-zinc-800 bg-zinc-900/80 backdrop-blur-xl sticky bottom-0">
-              <div className="flex justify-between mb-4 font-semibold text-lg">
+            <div className="p-6 border-t border-zinc-800 bg-zinc-900/80 backdrop-blur-xl sticky bottom-0 space-y-3">
+              <div className="flex justify-between font-semibold text-lg">
                 <span className="text-zinc-300">Total:</span>
                 <span className="text-white font-mono group-hover:[text-shadow:0_0_12px_rgba(34,211,238,0.8)]">
                   {formatPrice(total)}
                 </span>
               </div>
               <button
-                onClick={handleCheckout}
+                onClick={handleGoToCheckout}
                 disabled={items.length === 0}
                 className="w-full bg-zinc-800 hover:bg-cyan-500 text-white hover:text-zinc-950 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(34,211,238,0.6)] active:scale-95 disabled:opacity-50 disabled:hover:bg-zinc-800 disabled:hover:text-white disabled:hover:shadow-none disabled:cursor-not-allowed"
               >

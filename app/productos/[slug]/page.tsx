@@ -1,17 +1,80 @@
-
 import { Metadata } from "next";
-import Image from "next/image";
 import { MOCK_PRODUCTS } from "@/app/data/products";
-import { notFound } from "next/navigation";
-import ProductActions from "@/app/productos/[id]/ProductActions";
+import { notFound, redirect } from "next/navigation";
+import ProductActions from "@/app/productos/[slug]/ProductActions";
+import ProductGallery from "./ProductGallery";
 import { Product } from "@/app/types/product";
+import Breadcrumbs from "./Breadcrumbs";
+import RelatedProducts from "@/app/productos/[slug]/RelatedProducts";
+import { slugify } from "@/app/lib/slugify";
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://datawave-storefront-fv8f.vercel.app";
+
 interface Props {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
+
+function findBySlug(slug: string) {
+  return MOCK_PRODUCTS.find((p) => slugify(p.name) === slug);
+}
+
+// Pre-genera todas las páginas de producto en build time en vez de
+// resolverlas en cada request.
+export function generateStaticParams() {
+  return MOCK_PRODUCTS.map((product) => ({
+    slug: slugify(product.name),
+  }));
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const product = findBySlug(slug);
+
+  if (!product) {
+    return {
+      title: "Producto no encontrado | DataWave",
+    };
+  }
+
+  const formattedPrice =
+    typeof product.price === "number" || !isNaN(Number(product.price))
+      ? new Intl.NumberFormat("es-AR", {
+          style: "currency",
+          currency: "ARS",
+          maximumFractionDigits: 0,
+        }).format(Number(product.price))
+      : product.price;
+
+  return {
+    title: `${product.name} - ${formattedPrice} | DataWave`,
+    description: product.description,
+    alternates: {
+      canonical: `/productos/${slugify(product.name)}`,
+    },
+    openGraph: {
+      title: product.name,
+      description: product.description,
+      images: [{ url: product.image || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e" }],
+    },
+  };
+}
+
 export default async function ProductDetailPage({ params }: Props) {
-  
-  const { id } = await params;
-  const rawProduct = MOCK_PRODUCTS.find((p: Product) => Number(p.id) === Number(id));
+  const { slug } = await params;
+
+  // Compatibilidad con URLs viejas: si alguien entra con el id numérico
+  // (ej. quedó guardado en un favorito, un mail viejo o Google todavía
+  // no re-indexó), lo mandamos a la URL nueva con slug en vez de un 404.
+  if (/^\d+$/.test(slug)) {
+    const byId = MOCK_PRODUCTS.find((p) => Number(p.id) === Number(slug));
+    if (byId) {
+      redirect(`/productos/${slugify(byId.name)}`);
+    }
+    notFound();
+  }
+
+  const rawProduct = findBySlug(slug);
 
   if (!rawProduct) {
     notFound();
@@ -35,6 +98,8 @@ export default async function ProductDetailPage({ params }: Props) {
     description: rawProduct.description || "",
   };
 
+  const productSlug = slugify(product.name);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -50,7 +115,7 @@ export default async function ProductDetailPage({ params }: Props) {
         product.stock > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
-      url: `https://tu-dominio.com/productos/${product.id}`,
+      url: `${SITE_URL}/productos/${productSlug}`,
     },
   };
 
@@ -61,24 +126,12 @@ export default async function ProductDetailPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      <div className="max-w-5xl mx-auto">
+        <Breadcrumbs category={categoryName} productName={product.name} />
+      </div>
+
       <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-        <div className="relative border border-blue-500/40 rounded-3xl aspect-[3/4] overflow-hidden">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-10 z-10"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(0deg, rgba(6,182,212,0.4) 0px, transparent 1px, transparent 3px)",
-            }}
-          />
-          <Image
-            src={product.image}
-            alt={`${product.name} - ${categoryName}`}
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover"
-          />
-        </div>
+        <ProductGallery images={[product.image]} productName={product.name} />
 
         <div>
           <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest">
@@ -113,6 +166,8 @@ export default async function ProductDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      <RelatedProducts currentId={Number(product.id)} category={categoryName} />
     </main>
   );
 }

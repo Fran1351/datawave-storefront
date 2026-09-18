@@ -3,8 +3,9 @@
 import Navbar from "@/app/components/Navbar";
 import { MOCK_PRODUCTS } from "@/app/data/products";
 import { ProductCard } from "@/app/components/ProductCard";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useCart } from "@/app/context/CartContext";
+import { slugify } from "@/app/lib/slugify";
 
 type SortOption = "newest" | "alphabetical" | "price-asc" | "price-desc";
 
@@ -15,11 +16,28 @@ const SORT_LABELS: Record<SortOption, string> = {
   "price-desc": "Precio: mayor a menor",
 };
 
+const ITEMS_PER_PAGE = 12;
+
 export default function Productos() {
   const { addToCart } = useCart();
   const [category, setCategory] = useState("Todos");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Rango de precios disponible según los productos reales
+  const overallMaxPrice = useMemo(
+    () => Math.max(...MOCK_PRODUCTS.map((p) => Number(p.price))),
+    []
+  );
+  const [maxPrice, setMaxPrice] = useState(overallMaxPrice);
+
+  const formatPrice = (amount: number) =>
+    new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
+      maximumFractionDigits: 0,
+    }).format(amount);
 
   // CATEGORÍAS AUTOMÁTicas
   const categories = [
@@ -40,7 +58,9 @@ export default function Productos() {
         .toLowerCase()
         .includes(search.toLowerCase());
 
-    return matchesCategory && matchesSearch;
+    const matchesPrice = Number(product.price) <= maxPrice;
+
+    return matchesCategory && matchesSearch && matchesPrice;
   });
 
   // ORDENADO (memoizado para no re-ordenar en cada render innecesario)
@@ -63,6 +83,30 @@ export default function Productos() {
         return list.reverse();
     }
   }, [filteredProducts, sortBy]);
+
+  // Volvemos a la página 1 cada vez que cambia algún filtro u orden
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, search, sortBy, maxPrice]);
+
+  // PAGINACIÓN
+  const totalPages = Math.max(1, Math.ceil(sortedProducts.length / ITEMS_PER_PAGE));
+  const paginatedProducts = sortedProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Le agregamos el slug a cada producto antes de pasarlo a ProductCard,
+  // para que el link a la página de detalle use la URL nueva.
+  const productsWithSlug = paginatedProducts.map((product) => ({
+    ...product,
+    slug: slugify(product.name),
+  }));
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
@@ -182,7 +226,7 @@ export default function Productos() {
       </section>
 
       {/* CATEGORÍAS */}
-      <section className="px-8 md:px-20 pb-12">
+      <section className="px-8 md:px-20 pb-8">
         <div className="max-w-6xl mx-auto">
         
           <div className="flex flex-wrap gap-3">
@@ -222,6 +266,36 @@ export default function Productos() {
         
           </div>
         
+        </div>
+      </section>
+
+      {/* FILTRO DE PRECIO */}
+      <section className="px-8 md:px-20 pb-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 max-w-md">
+            <div className="flex justify-between items-center mb-3">
+              <label htmlFor="price-range" className="text-sm font-semibold text-zinc-300">
+                Precio máximo
+              </label>
+              <span className="text-sm font-mono text-cyan-400">
+                {formatPrice(maxPrice)}
+              </span>
+            </div>
+            <input
+              id="price-range"
+              type="range"
+              min={0}
+              max={overallMaxPrice}
+              step={500}
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(Number(e.target.value))}
+              className="w-full accent-cyan-400 cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-zinc-600 mt-2 font-mono">
+              <span>{formatPrice(0)}</span>
+              <span>{formatPrice(overallMaxPrice)}</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -287,19 +361,77 @@ export default function Productos() {
           </div>
 
           {/* RESULTADOS */}
-          {sortedProducts.length > 0 ? (
-           
-           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {sortedProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={addToCart}
-                />
-              ))}
-           
-            </div>
-          
+          {paginatedProducts.length > 0 ? (
+            <>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {productsWithSlug.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={addToCart}
+                  />
+                ))}
+              </div>
+
+              {/* PAGINACIÓN */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-12">
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="
+                      w-10 h-10
+                      rounded-full
+                      bg-zinc-900
+                      border border-zinc-800
+                      text-zinc-300
+                      hover:border-cyan-500/50
+                      hover:text-white
+                      disabled:opacity-30
+                      disabled:cursor-not-allowed
+                      transition
+                    "
+                    aria-label="Página anterior"
+                  >
+                    ‹
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={
+                        page === currentPage
+                          ? "w-10 h-10 rounded-full bg-cyan-500 text-black font-bold transition"
+                          : "w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600 transition"
+                      }
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="
+                      w-10 h-10
+                      rounded-full
+                      bg-zinc-900
+                      border border-zinc-800
+                      text-zinc-300
+                      hover:border-cyan-500/50
+                      hover:text-white
+                      disabled:opacity-30
+                      disabled:cursor-not-allowed
+                      transition
+                    "
+                    aria-label="Página siguiente"
+                  >
+                    ›
+                  </button>
+                </div>
+              )}
+            </>
         ) : (
            
             /* SIN RESULTADOS */
@@ -345,6 +477,7 @@ export default function Productos() {
                 onClick={() => {
                   setSearch("");
                   setCategory("Todos");
+                  setMaxPrice(overallMaxPrice);
                 }}
                 className="
                   mt-6

@@ -10,23 +10,62 @@ type PromoType = "none" | "percent" | "fixed";
 type PricingEntry = { price: number; promoType: PromoType; promoValue: number };
 type PricingMap = { [key: number]: PricingEntry };
 
+type OrderStatus = "PENDING" | "PAID" | "CANCELLED";
+
+type OrderItem = {
+  id: string;
+  orderId: string;
+  productId: string;
+  quantity: number;
+  price: number;
+};
+
+type Order = {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string | null;
+  shippingAddress: string | null;
+  shippingCity: string | null;
+  shippingProvince: string | null;
+  paymentMethod: string;
+  totalAmount: number;
+  status: OrderStatus;
+  updatedAt: string;
+  items: OrderItem[];
+};
+
 const STOCK_KEY = "datawave-stock";
 const PRICING_KEY = "datawave-pricing";
+
+const STATUS_LABELS: Record<OrderStatus, string> = {
+  PENDING: "Pendiente",
+  PAID: "Pagado",
+  CANCELLED: "Cancelado",
+};
+
+const STATUS_STYLES: Record<OrderStatus, string> = {
+  PENDING: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+  PAID: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+  CANCELLED: "bg-red-500/10 text-red-400 border-red-500/30",
+};
 
 export default function AdminDashboard() {
   const [stock, setStock] = useState<StockMap>({});
   const [pricing, setPricing] = useState<PricingMap>({});
-  const [activeTab, setActiveTab] = useState<"stock" | "prices" | "settings">("stock");
+  const [activeTab, setActiveTab] = useState<"stock" | "prices" | "orders" | "settings">("stock");
   const [stockSaved, setStockSaved] = useState(false);
   const [pricingSaved, setPricingSaved] = useState(false);
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+
   const router = useRouter();
 
   useEffect(() => {
-    const isAdmin = sessionStorage.getItem("datawave-admin");
-    if (!isAdmin) {
-      router.push("/admin/login");
-    }
-
     // Stock: arranca desde MOCK_PRODUCTS, pero si ya hay algo guardado, prioriza eso
     const initialStock: StockMap = {};
     MOCK_PRODUCTS.forEach((p) => {
@@ -67,6 +106,51 @@ export default function AdminDashboard() {
     }
     setPricing(initialPricing);
   }, [router]);
+
+  useEffect(() => {
+    if (activeTab === "orders") {
+      fetchOrders();
+    }
+  }, [activeTab]);
+
+  async function fetchOrders() {
+    setOrdersLoading(true);
+    setOrdersError(null);
+    try {
+      const res = await fetch("/api/admin/orders");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Error al cargar pedidos");
+      }
+      setOrders(data.orders);
+    } catch (err: any) {
+      setOrdersError(err.message || "Error al cargar pedidos");
+    } finally {
+      setOrdersLoading(false);
+    }
+  }
+
+  async function handleStatusChange(orderId: string, newStatus: OrderStatus) {
+    setUpdatingOrderId(orderId);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, status: newStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "No se pudo actualizar");
+      }
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+      );
+    } catch (err: any) {
+      alert(err.message || "No se pudo actualizar el estado del pedido");
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  }
 
   function handleStockChange(id: number, value: string) {
     const newStock = parseInt(value, 10);
@@ -127,10 +211,12 @@ export default function AdminDashboard() {
     return entry.price;
   }
 
-  function handleLogout() {
-    sessionStorage.removeItem("datawave-admin");
+  async function handleLogout() {
+    await fetch("/api/admin/logout", { method: "POST" });
     router.push("/admin/login");
   }
+
+  const filteredOrders = statusFilter === "all" ? orders : orders.filter((o) => o.status === statusFilter);
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white selection:bg-cyan-500 selection:text-black flex">
@@ -163,6 +249,14 @@ export default function AdminDashboard() {
             💲 Precios y Promociones
           </button>
           <button
+            onClick={() => setActiveTab("orders")}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium w-full text-left transition ${
+              activeTab === "orders" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
+            }`}
+          >
+            🧾 Pedidos
+          </button>
+          <button
             onClick={() => setActiveTab("settings")}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium w-full text-left transition ${
               activeTab === "settings" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-white"
@@ -190,6 +284,8 @@ export default function AdminDashboard() {
                 ? "Inventario de Productos"
                 : activeTab === "prices"
                 ? "Precios y Promociones"
+                : activeTab === "orders"
+                ? "Pedidos"
                 : "Configuración del Sistema"}
             </h2>
           </div>
@@ -367,6 +463,102 @@ export default function AdminDashboard() {
                 {pricingSaved ? "✓ Guardado" : "Guardar Cambios"}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* VISTA: PEDIDOS */}
+        {activeTab === "orders" && (
+          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <h3 className="text-lg font-semibold text-white">
+                Pedidos {!ordersLoading && `(${filteredOrders.length})`}
+              </h3>
+
+              <div className="flex items-center gap-2">
+                {(["all", "PENDING", "PAID", "CANCELLED"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition border ${
+                      statusFilter === s
+                        ? "bg-cyan-500 text-black border-cyan-500"
+                        : "bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-white"
+                    }`}
+                  >
+                    {s === "all" ? "Todos" : STATUS_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {ordersLoading ? (
+              <div className="p-12 text-center text-zinc-500">Cargando pedidos...</div>
+            ) : ordersError ? (
+              <div className="p-12 text-center text-red-400">{ordersError}</div>
+            ) : filteredOrders.length === 0 ? (
+              <div className="p-12 text-center text-zinc-500">No hay pedidos para mostrar.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-zinc-800/40 text-zinc-400">
+                    <tr>
+                      <th className="p-4 font-medium uppercase text-xs">Cliente</th>
+                      <th className="p-4 font-medium uppercase text-xs">Productos</th>
+                      <th className="p-4 font-medium uppercase text-xs">Método</th>
+                      <th className="p-4 font-medium uppercase text-xs text-right">Total</th>
+                      <th className="p-4 font-medium uppercase text-xs text-center">Estado</th>
+                      <th className="p-4 font-medium uppercase text-xs text-center">Actualizar</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/50">
+                    {filteredOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-zinc-800/30 transition-colors align-top">
+                        <td className="p-4">
+                          <p className="font-medium text-white">{order.customerName}</p>
+                          <p className="text-zinc-500 text-xs">{order.customerEmail}</p>
+                          {order.shippingCity && (
+                            <p className="text-zinc-600 text-xs mt-0.5">
+                              {order.shippingCity}, {order.shippingProvince}
+                            </p>
+                          )}
+                        </td>
+                        <td className="p-4 text-zinc-400 text-xs">
+                          {order.items.length} {order.items.length === 1 ? "producto" : "productos"}
+                          <span className="block text-zinc-600">
+                            ({order.items.reduce((acc, i) => acc + i.quantity, 0)} unidades)
+                          </span>
+                        </td>
+                        <td className="p-4 text-zinc-400 capitalize">{order.paymentMethod}</td>
+                        <td className="p-4 text-right font-semibold text-white tabular-nums">
+                          {formatPrice(Number(order.totalAmount))}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${STATUS_STYLES[order.status]}`}
+                          >
+                            {STATUS_LABELS[order.status]}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <select
+                            value={order.status}
+                            disabled={updatingOrderId === order.id}
+                            onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
+                            className="bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-500 transition disabled:opacity-50"
+                          >
+                            {(Object.keys(STATUS_LABELS) as OrderStatus[]).map((s) => (
+                              <option key={s} value={s}>
+                                {STATUS_LABELS[s]}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

@@ -7,6 +7,9 @@ import { Product } from "@/app/types/product";
 import { formatPrice } from "@/lib/utils";
 import { usePricing } from "@/app/hooks/usePricing";
 import { useStock } from "@/app/hooks/useStock";
+import { useCart } from "@/app/context/CartContext";
+import { useToast } from "@/app/context/ToastContext";
+import { slugify } from "@/app/lib/slugify";
 
 interface ProductCardProps {
   product: Product;
@@ -15,8 +18,11 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const productName = product.name || product.title || "este producto";
+  const productSlug = slugify(productName);
   const { finalPrice, hasPromo } = usePricing(Number(product.id), Number(product.price));
   const { hasStock } = useStock(Number(product.id), Number(product.stock ?? 0));
+  const { openCart } = useCart();
+  const { showToast } = useToast();
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
   const whatsappMessage = encodeURIComponent(
@@ -51,7 +57,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       )}
 
       {/* Enlace que envuelve la imagen y el texto para ir al detalle */}
-      <Link href={`/productos/${product.id}`} className="block">
+      <Link href={`/productos/${productSlug}`} className="block">
         <div className={`relative w-full aspect-[3/4] mb-5 bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800/60 flex items-center justify-center p-4 ${!hasStock ? "opacity-50" : ""}`}>
           {/* Scanlines sutiles */}
           <div
@@ -98,6 +104,8 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               onClick={(e) => {
                 e.preventDefault();
                 onAddToCart({ ...product, price: finalPrice });
+                showToast(`${productName} agregado al carrito`);
+                openCart();
               }}
               className="flex-1 bg-zinc-800 hover:bg-cyan-500 text-white hover:text-zinc-950 font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-[0_0_20px_rgba(34,211,238,0.6)] active:scale-95"
             >

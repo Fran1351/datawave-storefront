@@ -5,10 +5,27 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/app/context/CartContext";
 
+type PaymentMethod = "mercadopago" | "transferencia" | "efectivo";
+
+const PAYMENT_LABELS: Record<PaymentMethod, string> = {
+  mercadopago: "Mercado Pago",
+  transferencia: "Transferencia",
+  efectivo: "Retiro en local",
+};
+
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+  const [customerCity, setCustomerCity] = useState("");
+  const [customerProvince, setCustomerProvince] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mercadopago");
+  const [orderConfirmation, setOrderConfirmation] = useState<{ orderId: string; method: PaymentMethod } | null>(null);
+
+  const needsShipping = paymentMethod !== "efectivo";
 
   // Formatear precio numérico a moneda local
   const formatPrice = (amount: number) => {
@@ -37,19 +54,41 @@ export default function CartPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({
+          items,
+          customerName,
+          customerEmail,
+          paymentMethod,
+          ...(needsShipping && {
+            shippingAddress: customerAddress,
+            shippingCity: customerCity,
+            shippingProvince: customerProvince,
+          }),
+        }),
       });
 
       const data = await response.json();
 
       if (data.init_point) {
+        // Mercado Pago: redirige a pagar
         window.location.href = data.init_point;
-      } else {
-        alert("Hubo un error al iniciar el pago con Mercado Pago.");
-        setIsLoading(false);
+        return;
       }
+
+      if (data.success) {
+        // Transferencia o efectivo: no hay redirección externa
+        clearCart();
+        setOrderConfirmation({ orderId: data.orderId, method: paymentMethod });
+        setIsCheckingOut(false);
+        setIsLoading(false);
+        return;
+      }
+
+      alert(data.error || "Hubo un error al procesar tu pedido.");
+      setIsLoading(false);
     } catch (error) {
       console.error("Error en el checkout:", error);
+      alert("Hubo un error al procesar tu pedido. Intentá de nuevo.");
       setIsLoading(false);
     }
   };
@@ -63,6 +102,28 @@ export default function CartPage() {
         <h1 className="text-4xl md:text-6xl font-bold mt-2 mb-10">
           Tu Carrito
         </h1>
+
+        {/* Confirmación post-compra (transferencia / efectivo) */}
+        {orderConfirmation && (
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-3xl p-8 mb-10 max-w-2xl">
+            <h2 className="text-xl font-bold text-emerald-400 mb-2">¡Pedido registrado!</h2>
+            <p className="text-zinc-300 text-sm">
+              Tu pedido <span className="font-mono text-white break-all">#{orderConfirmation.orderId}</span> fue
+              registrado con el método <strong>{PAYMENT_LABELS[orderConfirmation.method]}</strong>.
+              {orderConfirmation.method === "transferencia" &&
+                " Te vamos a contactar por email con los datos bancarios para completar el pago."}
+              {orderConfirmation.method === "efectivo" &&
+                " Podés retirarlo en el local y abonar en efectivo al momento del retiro."}
+            </p>
+            <p className="text-zinc-400 text-sm mt-2">
+              Podés consultar el estado en cualquier momento en{" "}
+              <Link href="/seguimiento" className="text-cyan-400 hover:underline">
+                /seguimiento
+              </Link>
+              .
+            </p>
+          </div>
+        )}
 
         {cart.length === 0 ? (
           <div className="bg-zinc-900/40 border border-zinc-800 rounded-3xl p-12 text-center max-w-xl mx-auto my-12">
@@ -111,7 +172,7 @@ export default function CartPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-lg">{item.name}</h3>
-                      <p className="text-zinc-400 text-sm">Number(item.price)</p>
+                      <p className="text-zinc-400 text-sm">{formatPrice(Number(item.price))}</p>
                     </div>
                   </div>
 
@@ -218,8 +279,8 @@ export default function CartPage() {
 
       {/* Modal de Finalizar Compra */}
       {isCheckingOut && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 max-w-md w-full relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 max-w-md w-full relative my-8">
             <button
               onClick={() => setIsCheckingOut(false)}
               className="absolute top-6 right-6 text-zinc-400 hover:text-white"
@@ -228,7 +289,31 @@ export default function CartPage() {
             </button>
 
             <form onSubmit={handleCheckout} className="space-y-4">
-              <h3 className="text-xl font-bold mb-4">Datos de envío</h3>
+              <h3 className="text-xl font-bold mb-4">Datos de tu pedido</h3>
+
+              {/* Método de pago */}
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 mb-2">
+                  Método de pago
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {(Object.keys(PAYMENT_LABELS) as PaymentMethod[]).map((method) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setPaymentMethod(method)}
+                      className={`px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300 border ${
+                        paymentMethod === method
+                          ? "bg-cyan-500 text-black border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+                          : "bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-600 hover:text-white"
+                      }`}
+                    >
+                      {PAYMENT_LABELS[method]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-zinc-400 mb-1">
                   Nombre Completo
@@ -237,7 +322,9 @@ export default function CartPage() {
                   type="text"
                   required
                   placeholder="Juan Pérez"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-500"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 transition"
                 />
               </div>
               <div>
@@ -248,20 +335,58 @@ export default function CartPage() {
                   type="email"
                   required
                   placeholder="juan@ejemplo.com"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-500"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 transition"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-zinc-400 mb-1">
-                  Dirección de entrega
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Av. Corrientes 1234"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-zinc-500"
-                />
-              </div>
+
+              {/* Datos de envío: solo si no es retiro en local */}
+              {needsShipping && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-400 mb-1">
+                      Dirección de entrega
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Av. Corrientes 1234"
+                      value={customerAddress}
+                      onChange={(e) => setCustomerAddress(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 transition"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-400 mb-1">
+                        Ciudad
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Córdoba"
+                        value={customerCity}
+                        onChange={(e) => setCustomerCity(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-zinc-400 mb-1">
+                        Provincia
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Córdoba"
+                        value={customerProvince}
+                        onChange={(e) => setCustomerProvince(e.target.value)}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 transition"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="pt-4 border-t border-zinc-800 flex justify-between items-center mb-4">
                 <span className="text-sm text-zinc-400">Total a pagar:</span>
@@ -273,7 +398,11 @@ export default function CartPage() {
                 disabled={isLoading}
                 className="w-full bg-white text-black font-bold py-4 rounded-full hover:bg-zinc-200 transition disabled:opacity-50"
               >
-                {isLoading ? "Redirigiendo a Mercado Pago..." : "Pagar con Mercado Pago"}
+                {isLoading
+                  ? "Procesando..."
+                  : paymentMethod === "mercadopago"
+                  ? "Pagar con Mercado Pago"
+                  : "Confirmar pedido"}
               </button>
             </form>
           </div>
