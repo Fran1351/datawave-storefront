@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { randomUUID } from "crypto";
-import { resend } from "@/lib/resend";
+import { getResend } from "@/lib/resend";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
@@ -107,14 +107,16 @@ export async function POST(request: Request) {
       // El stock ya se descontó, pero todavía no existen filas de OrderItem
       // (recién las vamos a crear después), así que devolvemos el stock
       // a partir del array de items original, no del pedido.
-      await supabase
-        .rpc("restore_stock_for_items", {
+      try {
+        await supabase.rpc("restore_stock_for_items", {
           items: items.map((item: any) => ({
             id: String(item.id),
             quantity: Number(item.quantity),
           })),
-        })
-        .match(() => {});
+        });
+      } catch (restoreError) {
+        console.error("Error al restaurar stock tras fallo de pedido:", restoreError);
+      }
       return NextResponse.json(
         { error: "No se pudo registrar el pedido." },
         { status: 500 }
@@ -137,15 +139,21 @@ export async function POST(request: Request) {
       // El stock ya se descontó y el pedido ya se creó, pero OrderItem
       // falló: revertimos el stock a partir del array original (no de
       // OrderItem, que no llegó a crearse) y borramos el pedido huérfano.
-      await supabase
-        .rpc("restore_stock_for_items", {
+      try {
+        await supabase.rpc("restore_stock_for_items", {
           items: items.map((item: any) => ({
             id: String(item.id),
             quantity: Number(item.quantity),
           })),
-        })
-        .match(() => {});
-      await supabase.from("Order").delete().eq("id", orderId).match(() => {});
+        });
+      } catch (restoreError) {
+        console.error("Error al restaurar stock tras fallo de items:", restoreError);
+      }
+      try {
+        await supabase.from("Order").delete().eq("id", orderId);
+      } catch (deleteError) {
+        console.error("Error al borrar el pedido huérfano:", deleteError);
+      }
       return NextResponse.json(
         { error: "No se pudieron registrar los productos del pedido." },
         { status: 500 }
@@ -153,28 +161,31 @@ export async function POST(request: Request) {
     }
 
     // 3. Mail de confirmación del pedido recibido (no implica pago aprobado)
-    try {
-      await resend.emails.send({
-        from: "DataWave <onboarding@resend.dev>", // luego migrás a tu dominio
-        to: customerEmail,
-        subject: "Confirmamos tu pedido en DataWave",
-        html: `
-          <div style="font-family: sans-serif; background:#09090b; color:#fff; padding:24px; border-radius:16px;">
-            <h1 style="color:#22d3ee;">¡Gracias por tu compra, ${customerName}!</h1>
-            <p>Recibimos tu pedido y en breve vas a poder completar el pago.</p>
-            <p style="color:#a1a1aa;">Número de pedido: <strong style="color:#fff;">${orderId}</strong></p>
-            ${shippingAddress ? `<p style="color:#a1a1aa;">Dirección de entrega: ${shippingAddress}</p>` : ""}
-            <p style="margin-top:16px;">
-              <a href="${process.env.NEXT_PUBLIC_SITE_URL}/seguimiento" style="color:#22d3ee;">
-                Seguí el estado de tu pedido acá
-              </a>
-            </p>
-          </div>
-        `,
-      });
-    } catch (emailError) {
-      // No bloqueamos el checkout si falla el mail
-      console.error("Error al enviar el mail de confirmación:", emailError);
+    const resend = getResend();
+    if (resend) {
+      try {
+        await resend.emails.send({
+          from: "DataWave <onboarding@resend.dev>", // luego migrás a tu dominio
+          to: customerEmail,
+          subject: "Confirmamos tu pedido en DataWave",
+          html: `
+            <div style="font-family: sans-serif; background:#09090b; color:#fff; padding:24px; border-radius:16px;">
+              <h1 style="color:#22d3ee;">¡Gracias por tu compra, ${customerName}!</h1>
+              <p>Recibimos tu pedido y en breve vas a poder completar el pago.</p>
+              <p style="color:#a1a1aa;">Número de pedido: <strong style="color:#fff;">${orderId}</strong></p>
+              ${shippingAddress ? `<p style="color:#a1a1aa;">Dirección de entrega: ${shippingAddress}</p>` : ""}
+              <p style="margin-top:16px;">
+                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/seguimiento" style="color:#22d3ee;">
+                  Seguí el estado de tu pedido acá
+                </a>
+              </p>
+            </div>
+          `,
+        });
+      } catch (emailError) {
+        // No bloqueamos el checkout si falla el mail
+        console.error("Error al enviar el mail de confirmación:", emailError);
+      }
     }
 
     // 4. Si es transferencia o efectivo, no pasamos por Mercado Pago
