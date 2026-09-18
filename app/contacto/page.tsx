@@ -197,7 +197,7 @@ export default function ContactoPage() {
               </span>
               <div>
                 <p className="text-sm font-bold text-white">Instagram</p>
-                <p className="text-xs text-zinc-400">@datawave</p>
+                <p className="text-xs text-zinc-400">@datawavee__</p>
               </div>
             </a>
           </div>
