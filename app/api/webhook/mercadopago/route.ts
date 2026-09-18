@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { resend } from "@/lib/resend";
+import { getResend } from "@/lib/resend";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || "",
@@ -89,7 +89,8 @@ export async function POST(request: Request) {
     }
 
     // Mail de "pago confirmado", solo la primera vez que pasa a PAID
-    if (newStatus === "PAID" && !wasAlreadyPaid && existingOrder.customerEmail) {
+    const resend = getResend();
+    if (newStatus === "PAID" && !wasAlreadyPaid && existingOrder.customerEmail && resend) {
       try {
         await resend.emails.send({
           from: "DataWave <onboarding@resend.dev>", // luego migrás a tu dominio
